@@ -1,0 +1,24 @@
+{
+  "name": "thermal-printer-javascript",
+  "version": "1.0.0",
+  "description": "",
+  "main": "formatter.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/haydenwies/ivory-pos-startup-script-js.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/haydenwies/ivory-pos-startup-script-js/issues"
+  },
+  "homepage": "https://github.com/haydenwies/ivory-pos-startup-script-js#readme",
+  "dependencies": {
+    "escpos": "^3.0.0-alpha.6",
+    "escpos-network": "^3.0.0-alpha.5",
+    "firebase-admin": "^10.2.0"
+  }
+}

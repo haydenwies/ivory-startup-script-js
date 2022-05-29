@@ -13,7 +13,12 @@ class Backend {
 
         this.db = getFirestore()
 
-        // Get resturant info
+        const doc = this.db.collection("general").doc("restaurantInfo").get()
+        if (doc.exists) {
+            this.restaurantInfo = doc.data()
+        } else {
+            this.restaurantInfo = null
+        }
 
     }
     
@@ -27,37 +32,36 @@ class Backend {
 
                 if (change.type === "added") {
 
+                    
+
                     const data = change.doc.data()
                     
                     // Get order id
                     const id = data["id"]
                     // Get printers
                     const printers = data["printers"]
+                    
+        
+                    // const fetch = new Promise 
+                    
+                    
                     // Fetch order
                     const order = await this.db.collection("orders").doc(id).get()
                     // Check if exists
                     if (!order.exists) {
-                        throw "Order cannot be found"
-                    }
+                        throw "Order cannot be found."
+                    } else {
 
-                    // Try print to each printer 
-                    var failedPrinters = []
-                    for (const printer of printers) {
-                        try {
-                            new TemplateOne(printer, "", order)
-                        } catch(err) {
-                            failedPrinters.push(err)
+                        for (const printer of printers) {                            
+                            new Promise((resolve, reject) => {
+                                resolve, reject = new TemplateOne(printer, resolve, reject, this.restaurantInfo, order.data())
+                            }).catch((err) => {
+                                let x = {}
+                                x[printer] = new Date().toLocaleString('sv', {timeZoneName: 'short'}).slice(0, 19)
+                                this.db.collection("errLog").doc(id).set(x, { merge: true })
+                            })
                         }
-                    }
 
-                    // If there was failed printers, log
-                    if (failedPrinters.length > 0) {
-                        this.db.collection("errLog").add({
-                            "datetime" : new Date().toLocaleString('sv', {timeZoneName: 'short'}).slice(0, 18),
-                            "errType" : "PRINTER_CONNECTION_ERR",
-                            "errMessage" : `Failed to print to ${failedPrinters.length} printers`,
-                            "failedPrinters" : failedPrinters
-                        })
                     }
 
                 }

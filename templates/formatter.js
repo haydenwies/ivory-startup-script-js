@@ -10,12 +10,11 @@ class Formatter {
      */
     divider() {
 
-        div = ""
+        var div = ""
 
-        for (i = 0; i < this.lineWidth; i++) {
-            div.concat("-")
+        for (let i = 0; i < this.lineWidth; i++) {
+            div += "-"
         }
-
         return div
     }
 
@@ -25,11 +24,11 @@ class Formatter {
      * @param {String} address Address included if DELIVERY, default null.
      * @returns Formatted text or null value.
      */
-    orderType(orderType, address = null) {
+    orderType(orderType = "", address = "") {
 
         if (orderType === "PICKUP") {
 
-            return "PICKUP\n"
+            return "PICKUP"
 
         } else if (orderType === "DELIVERY") {
 
@@ -57,8 +56,8 @@ class Formatter {
      * @param {String} note Note string.
      * @returns Formatted note.
      */
-    note(note) {
-
+    note(note = String) {
+        
         const x = "NOTE:  "
         if (note.length > this.lineWidth - x.length) {
 
@@ -71,7 +70,7 @@ class Formatter {
             return `NOTE:  ${note}`
         
         }
-
+    
     }
 
     /**
@@ -87,7 +86,7 @@ class Formatter {
         quantity = ` x${item["quantity"]}`
         spacer = 4
         spacerString = ""
-        for (i = 0; i < spcaer; i++) {
+        for (let i = 0; i < spcaer; i++) {
             spacerString.concat(" ")
         }
         price = `$${item["price"]}`
@@ -126,7 +125,7 @@ class Formatter {
             const componentHeight = Math.ceil(component.length / componentWidth)
 
             if (componentHeight > 1) {
-                for (i = 0; i < componentHeight; i++) {
+                for (let i = 0; i < componentHeight; i++) {
 
                     x = component.slice(i*componentWidth, (i+1)*componentWidth)
 
@@ -152,7 +151,7 @@ class Formatter {
             const modifierHeight = Math.ceil((modifier.length + 2) / modifierWidth)
 
             if (modifierHeight > 1) {
-                for (i = 0; i < modifierHeight; i++) {
+                for (let i = 0; i < modifierHeight; i++) {
 
                     x = modifier.split(i*modifierWidth, (i+1)*modifierWidth)
 
@@ -177,13 +176,13 @@ class Formatter {
      * @param {String} priceLabel Declares what type of pruce is being displayed (ex. beforeTaxDiscount).
      * @param {Float} price Displayed price.
      */
-    priceStatement(priceLabel, price) {
+    priceStatement(priceLabel, price = Number) {
 
-        const spacer = ""
-        const x = this.lineWidth - priceLabel.length - 1 - price.toString().length
+        var spacer = ""
+        const x = this.lineWidth - priceLabel.length - 2 - price.toString().length
 
         for (let i = 0; i < x; i++) {
-            spacer.concat(" ")
+            spacer += " "
         }
 
         return `${priceLabel}:${spacer}$${price.toString()}`

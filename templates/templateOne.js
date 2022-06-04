@@ -1,32 +1,29 @@
 class TemplateOne {
-    
-    constructor(ipAddress, resolve, reject, restaurantInfo, order) {        
 
-
+    constructor(ip, restaurantInfo, order, resolve, reject) {
         const escpos = require('escpos')
         escpos.Network = require('escpos-network')
         const Formatter = require('./formatter')
-        
         const formatter = new Formatter(48)
 
-        const device = new escpos.Network(ipAddress)
+        const device = new escpos.Network(ip)
         const options = { encoding : "utf8", width : 24 }
         const printer = new escpos.Printer(device, options)
-    
+
         const divider = formatter.divider()
         const dt = new Date().toLocaleString('sv', {timeZoneName: 'short'}).slice(0, 19)
         const orderType = formatter.orderType(order["orderType"], order["deliveryAddress"])
         const orderNote = formatter.note(order["note"])
 
-        // const items = () => {
-        //     const items = ""
-        //     for (const x of order["items"]) {
-        //         const item = formatter.itemBreakdown(x)
-        //         items.concat(item)
-        //     }
-        //     return items
-        // }
-        
+        const items = () => {
+            const items = ""
+            for (const x of order["items"]) {
+                const item = formatter.itemBreakdown(x)
+                items.concat(item)
+            }
+            return items
+        }
+
         const deliveryFee = () => {
             if (order["orderType"] == "DELIVERY") {
                 const deliveryFee = formatter.priceStatement("Delivery fee", order["deliveryFee"])
@@ -57,9 +54,11 @@ class TemplateOne {
         device.open((err) => {
 
             try {
+
                 if (err) {
-                    throw err
+                    throw(err)
                 } else {
+                
                     printer
                     // Restaurant name
                     .align("ct")
@@ -123,16 +122,16 @@ class TemplateOne {
                     .cut()
                     .close()
 
-                    
                     resolve("Printed successfully.")
-                    
-
                     return resolve, reject
+
                 }
-            } catch(err) {
+
+            } catch (err) {
 
                 reject("Failed to print.")
                 return resolve, reject
+
             }
 
         })

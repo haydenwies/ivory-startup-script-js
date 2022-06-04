@@ -13,26 +13,28 @@ class Backend {
 
         this.db = getFirestore()
 
-        const doc = this.db.collection("general").doc("restaurantInfo").get()
-        if (doc.exists) {
-            this.restaurantInfo = doc.data()
-        } else {
-            this.restaurantInfo = null
+        const x = async () => {
+            const doc = await this.db.collection("general").doc("restaurantInfo").get()
+            if (doc.exists) {
+                this.restaurantInfo = doc.data()
+            } else {
+                this.restaurantInfo = null
+            }
         }
+        x()
 
     }
     
     orderQueListener() {
         
+        // const TemplateOne = require('./templates/templateOne')
         const TemplateOne = require('./templates/templateOne')
-        const orderQue = this.db.collection("orderQue")
+        const orderQue = this.db.collection("printQue")
 
         orderQue.onSnapshot(querySnapshot => {
             querySnapshot.docChanges().forEach(async change => {
 
                 if (change.type === "added") {
-
-                    
 
                     const data = change.doc.data()
                     
@@ -41,27 +43,38 @@ class Backend {
                     // Get printers
                     const printers = data["printers"]
                     
-        
-                    // const fetch = new Promise 
-                    
-                    
                     // Fetch order
-                    const order = await this.db.collection("orders").doc(id).get()
+                    // const order = await this.db.collection("orders").doc(id).get()
+                    const orderQuery = await this.db.collection("orders").where("id", "==", id).get()
                     // Check if exists
-                    if (!order.exists) {
-                        throw "Order cannot be found."
+                    if (orderQuery.empty) {
+                        console.log("no docs")
                     } else {
-
-                        for (const printer of printers) {                            
-                            new Promise((resolve, reject) => {
-                                resolve, reject = new TemplateOne(printer, resolve, reject, this.restaurantInfo, order.data())
-                            }).catch((err) => {
-                                let x = {}
-                                x[printer] = new Date().toLocaleString('sv', {timeZoneName: 'short'}).slice(0, 19)
-                                this.db.collection("errLog").doc(id).set(x, { merge: true })
-                            })
-                        }
-
+                        orderQuery.docs.forEach((order => {
+                            for (const printer of printers) {                            
+                                new Promise((resolve, reject) => {
+                                    // resolve, reject = new TemplateOne.print(printer.ip, resolve, reject, this.restaurantInfo, order.data())
+                                    resolve, reject = new TemplateOne(printer.ip, this.restaurantInfo, order.data(), resolve, reject)
+                                }).then(async () => {
+                                    // this.db.collection("orders").doc(id).update({printed: true}) 
+                                    const orderQuery = await this.db.collection("orders").where("id", "==", id).get()
+                                    const ids = []
+                                    orderQuery.docs.forEach((doc) => {
+                                        ids.push(doc.id)
+                                    })
+                                    ids.forEach((id) => {
+                                        this.db.collection("orders").doc(id).update({printed: true})
+                                        await this.db.collection("printQue").doc(change.doc.id).delete()
+                                    })
+                                }).catch((err) => {
+                                    console.log(printer.ip)
+                                    const x = {}
+                                    x[printer.ip] = new Date().toLocaleString('sv', {timeZoneName: 'short'}).slice(0, 19)
+                                    this.db.collection("errLog").doc(id).set(x, {merge: true})
+                                })
+                            }
+                        }))
+                        
                     }
 
                 }

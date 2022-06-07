@@ -93,8 +93,8 @@ class TemplateOne {
                     // Spacer
                     .text("\n")
 
-                    // // Items
-                    // .text(items())
+                    // Items
+                    .text(items())
 
                     // Spacer
                     .text("\n")

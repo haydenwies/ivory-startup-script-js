@@ -1,89 +1,103 @@
 class Backend {
+  constructor() {
+    const { initializeApp, cert } = require("firebase-admin/app");
+    const { getFirestore } = require("firebase-admin/firestore");
 
-    constructor() {
+    const serviceAccount = require("./credentials.json");
 
-        const { initializeApp, cert } = require('firebase-admin/app')
-        const { getFirestore } = require('firebase-admin/firestore')
+    //Validate firebase credentials in credentials.json
+    initializeApp({
+      credential: cert(serviceAccount),
+    });
 
-        const serviceAccount = require('./credentials.json')
+    this.db = getFirestore(); //Gets a reference to firestore
 
-        initializeApp({
-            credential: cert(serviceAccount)
-        })
+    //Pulls restaurant info data
+    const x = async () => {
+      const doc = await this.db.collection("general").doc("restaurantInfo").get();
+      if (doc.exists) {
+        this.restaurantInfo = doc.data();
+      } else {
+        this.restaurantInfo = null;
+      }
+    };
+    x(); //Call the method to get restaurant info
+  }
 
-        this.db = getFirestore()
+  /**
+   * Firestore collection listener to listen to change events in the printQue collection
+   */
+  orderQueListener() {
+    // const TemplateOne = require('./templates/templateOne')
+    const TemplateOne = require("./templates/templateOne");
+    const orderQue = this.db.collection("printQue");
 
-        const x = async () => {
-            const doc = await this.db.collection("general").doc("restaurantInfo").get()
-            if (doc.exists) {
-                this.restaurantInfo = doc.data()
-            } else {
-                this.restaurantInfo = null
-            }
+    //Takes a snapshot of the collection at that current point in time
+    orderQue.onSnapshot((querySnapshot) => {
+      //Listens for when the querySnapshot document changes
+      querySnapshot.docChanges().forEach(async (change) => {
+        console.log("An order has arrived:");
+        if (change.type === "added") {
+          const data = change.doc.data(); //Gets the data of the changed doc
+          // console.table(data); //Displays the order object data
+
+          const id = data["id"]; // Get order id
+          const printers = data["printers"]; // Get printers
+
+          // Fetch order from the "orders" collection by querying the id
+          const orderQuery = await this.db.collection("orders").where("id", "==", id).get();
+
+          // Check if the document was able to be queried
+          if (orderQuery.empty) {
+            console.log("no docs");
+          } else {
+            //Take the list of documents from the query and loop over them
+            orderQuery.docs.forEach((order) => {
+              //For each printer we will need to generate a receipt
+              for (const printer of printers) {
+                //Execute the promise that generates a new template for the receipt data (since it's asynchronous task)
+                new Promise((resolve, reject) => {
+                  // resolve, reject = new TemplateOne.print(printer.ip, resolve, reject, this.restaurantInfo, order.data())
+                  resolve,
+                    (reject = new TemplateOne(
+                      printer.ip,
+                      this.restaurantInfo,
+                      order.data(),
+                      resolve,
+                      reject
+                    ));
+                })
+                  .then(async () => {
+                    // this.db.collection("orders").doc(id).update({printed: true})
+                    const orderQuery = await this.db.collection("orders").where("id", "==", id).get(); //Don't think we need to reinitialize orderQuery
+                    const ids = [];
+
+                    //Gets all of the docs from the query
+                    orderQuery.docs.forEach((doc) => {
+                      ids.push(doc.id);
+                    });
+
+                    //Find each document with the respective id and update the printed property in the (orders collection) and delete the document in the printQue collection
+                    ids.forEach(async (id) => {
+                      this.db.collection("orders").doc(id).update({ printed: true });
+                      await this.db.collection("printQue").doc(change.doc.id).delete();
+                    });
+                  })
+
+                  //If printing error record the printer ip address and date, then store it to err collection
+                  .catch((err) => {
+                    console.log("Printer Error");
+                    const x = {};
+                    x[printer.ip] = new Date().toLocaleString("sv", { timeZoneName: "short" }).slice(0, 19);
+                    this.db.collection("errLog").doc(id).set(x, { merge: true });
+                  });
+              }
+            });
+          }
         }
-        x()
-
-    }
-    
-    orderQueListener() {
-        
-        // const TemplateOne = require('./templates/templateOne')
-        const TemplateOne = require('./templates/templateOne')
-        const orderQue = this.db.collection("printQue")
-
-        orderQue.onSnapshot(querySnapshot => {
-            querySnapshot.docChanges().forEach(async change => {
-
-                if (change.type === "added") {
-
-                    const data = change.doc.data()
-                    
-                    // Get order id
-                    const id = data["id"]
-                    // Get printers
-                    const printers = data["printers"]
-                    
-                    // Fetch order
-                    // const order = await this.db.collection("orders").doc(id).get()
-                    const orderQuery = await this.db.collection("orders").where("id", "==", id).get()
-                    // Check if exists
-                    if (orderQuery.empty) {
-                        console.log("no docs")
-                    } else {
-                        orderQuery.docs.forEach((order => {
-                            for (const printer of printers) {                            
-                                new Promise((resolve, reject) => {
-                                    // resolve, reject = new TemplateOne.print(printer.ip, resolve, reject, this.restaurantInfo, order.data())
-                                    resolve, reject = new TemplateOne(printer.ip, this.restaurantInfo, order.data(), resolve, reject)
-                                }).then(async () => {
-                                    // this.db.collection("orders").doc(id).update({printed: true}) 
-                                    const orderQuery = await this.db.collection("orders").where("id", "==", id).get()
-                                    const ids = []
-                                    orderQuery.docs.forEach((doc) => {
-                                        ids.push(doc.id)
-                                    })
-                                    ids.forEach((id) => {
-                                        this.db.collection("orders").doc(id).update({printed: true})
-                                        await this.db.collection("printQue").doc(change.doc.id).delete()
-                                    })
-                                }).catch((err) => {
-                                    console.log(printer.ip)
-                                    const x = {}
-                                    x[printer.ip] = new Date().toLocaleString('sv', {timeZoneName: 'short'}).slice(0, 19)
-                                    this.db.collection("errLog").doc(id).set(x, {merge: true})
-                                })
-                            }
-                        }))
-                        
-                    }
-
-                }
-
-            })
-        })
-
-    }
-
+      });
+    });
+  }
 }
 
-module.exports = Backend
+module.exports = Backend;

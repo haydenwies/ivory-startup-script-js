@@ -39,7 +39,6 @@ class Backend {
         console.log("An order has arrived:");
         if (change.type === "added") {
           const data = change.doc.data(); //Gets the data of the changed doc
-          // console.table(data); //Displays the order object data
 
           const id = data["id"]; // Get order id
           const printers = data["printers"]; // Get printers
@@ -57,7 +56,6 @@ class Backend {
               for (const printer of printers) {
                 //Execute the promise that generates a new template for the receipt data (since it's asynchronous task)
                 new Promise((resolve, reject) => {
-                  // resolve, reject = new TemplateOne.print(printer.ip, resolve, reject, this.restaurantInfo, order.data())
                   resolve,
                     (reject = new TemplateOne(
                       printer.ip,
@@ -68,7 +66,7 @@ class Backend {
                     ));
                 })
                   .then(async () => {
-                    // this.db.collection("orders").doc(id).update({printed: true})
+                    console.log("Order Successfully Printed");
                     const orderQuery = await this.db.collection("orders").where("id", "==", id).get(); //Don't think we need to reinitialize orderQuery
                     const ids = [];
 
@@ -86,9 +84,12 @@ class Backend {
 
                   //If printing error record the printer ip address and date, then store it to err collection
                   .catch((err) => {
-                    console.log("Printer Error");
+                    let [printerStatus, errorMsg] = err;
+                    console.log(printerStatus + "\n", errorMsg);
                     const x = {};
                     x[printer.ip] = new Date().toLocaleString("sv", { timeZoneName: "short" }).slice(0, 19);
+                    x.errorMsg = `${err}`;
+                    this.db.collection("printQue").doc(id).delete();
                     this.db.collection("errLog").doc(id).set(x, { merge: true });
                   });
               }

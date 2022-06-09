@@ -8,6 +8,8 @@ class TemplateOne {
    * @param {*} reject stores the failed state
    */
   constructor(ip, restaurantInfo, order, resolve, reject) {
+    console.log("Formatting receipt...");
+
     //ESCPOS libraries
     const escpos = require("escpos");
     escpos.Network = require("escpos-network");
@@ -21,26 +23,6 @@ class TemplateOne {
     const options = { encoding: "utf8", width: 24 };
     const printer = new escpos.Printer(device, options);
 
-    //Properties of the receipt
-    const divider = formatter.divider(); //Divider string ("-----------------")
-    // const dt = new Date().toLocaleString("sv", { timeZoneName: "short" }).slice(0, 19); //I'm assuming this is the current time
-    let { date, hours, meridian, minutes, time } = order.scheduledTime;
-    const scheduledTime = order.isScheduledOrder ? `${hours}:${minutes} ${meridian}\n${date}` : "";
-    const orderTime = `${order.time[0]}, ${order.date}`;
-    const finishTime = order.isScheduledOrder ? scheduledTime : order.finishTime;
-    const orderType = formatter.orderType(order["orderType"], order["deliveryAddress"]); //The type of order with and a delivery address if applicable
-    const orderNote = formatter.note(order["note"]); //The order note
-    const isPaid = formatter.paidStatus(order.paid, order.paymentMethod);
-
-    const formattedTotals = `${formatter.priceStatement("Sub total", order["subTotal"])}\n${
-      order.discounted ? (order.afterTaxDiscount !== "" ? beforeTaxDiscount() + "\n" : "") : ""
-    }${order.deliveryAddress === "" ? "" : deliveryFee() + "\n"}${formatter.priceStatement(
-      "Tax",
-      order["tax"]
-    )}\n${
-      order.discounted ? (order.beforeTaxDiscount !== "" ? afterTaxDiscount() + "\n" : "") : ""
-    }${formatter.priceStatement("Total", order["total"])}`;
-
     // Formats the each individual item
     const items = () => {
       let items = "";
@@ -48,7 +30,6 @@ class TemplateOne {
         let item = formatter.itemBreakdown(x);
         items = items.concat(item);
       }
-      console.log(items);
       return items;
     };
 
@@ -82,22 +63,48 @@ class TemplateOne {
       }
     };
 
+    const divider = formatter.divider();
+    //Properties of the receipt
+    let { date, hours, meridian, minutes } = order.scheduledTime;
+    const scheduledTime = order.isScheduledOrder ? `${hours}:${minutes} ${meridian}\n${date}` : "";
+    const orderTime = `${order.time[0]}, ${order.date}`;
+    const finishTime = order.isScheduledOrder ? scheduledTime : order.finishTime;
+    const orderType = formatter.orderType(order["orderType"], order["deliveryAddress"]);
+    const orderNote = formatter.note(order["note"]);
+    const isPaid = formatter.paidStatus(order.paid, order.paymentMethod);
+    const endingMessage = "Thank You & Come Again :)";
+    const subTotal = `${formatter.priceStatement("Sub total", order["subTotal"])}`;
+    const beforeDiscount = `${
+      order.discounted ? (order.afterTaxDiscount !== "" ? beforeTaxDiscount() + "\n" : "") : ""
+    }`;
+    const delivery = `${order.deliveryAddress === "" ? "" : deliveryFee() + "\n"}`;
+    const tax = `${formatter.priceStatement("Tax", order["tax"])}`;
+    const afterDiscount = `${
+      order.discounted ? (order.beforeTaxDiscount !== "" ? afterTaxDiscount() + "\n" : "") : ""
+    }`;
+    const total = `${formatter.priceStatement("Total", order["total"])}`;
+
+    const formattedTotals = `${subTotal}${beforeDiscount}${delivery}${tax}\n${afterDiscount}${total}`; //Formatted totals as one string
+
+    console.log("Attempting to print...");
     //Attempts to connect to the thermal printer and execute the print
     device.open((err) => {
       try {
         if (err) {
-          console.error(err);
           throw err;
         } else {
           printer
+            .beep(1, 5)
             // Restaurant name
             .align("ct")
             .size(1.5, 1)
             .text(`${restaurantInfo["name"]}`)
+
             // Spacer
             .feed()
-            .size(1.5, 2)
+
             // Time
+            .size(1.5, 2)
             .text(finishTime)
             .size(0.5, 1)
 
@@ -107,45 +114,55 @@ class TemplateOne {
             // Order number
             .align("lt")
             .text(`Phone number:  ${order["phoneNumber"]}`)
+
             // Order time
             .text(`Order time:  ${orderTime}`)
+
             // Spacer
             .feed()
 
             // Order type
             .text(orderType)
+
             // Order note
-            .text(orderNote)
-            .text("\n")
+            .text(orderNote + "\n")
 
             // Payment Method
             .text(isPaid)
 
             // Divider
             .text(divider)
-            // Spacer
-            .text("\n")
-            .size(0.5, 1)
 
             // Items
-            .text(items())
+            .size(0.5, 1)
+            .text("\n" + items())
 
             // Divider
             .text(divider)
 
             // Totals
-            .text(formattedTotals)
+            .text(formattedTotals + "\n")
+
+            // Finish Time
+            .align("ct")
+            .size(1.5, 2)
+            .text(finishTime)
+
+            // Ending MEssage
+            .size(0.5, 1)
+            .text(endingMessage)
 
             // Spacer x2
             .text("\n\n")
-            
+
+            // Cut Receipt & Close printer session
             .cut()
             .close();
           resolve("Printed successfully.");
           return resolve, reject;
         }
       } catch (err) {
-        reject("Failed to print.");
+        reject(["Failed to print.", err]);
         return resolve, reject;
       }
     });

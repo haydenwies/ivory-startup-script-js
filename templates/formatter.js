@@ -20,13 +20,10 @@ class Formatter {
     if (isPaid) {
       switch (paymentMethod) {
         case "CASH":
-          console.log("CASH");
           return "Cash[ X ]          Debit[  ]          Credit[  ]";
         case "DEBIT":
-          console.log("DEBIT");
           return "Cash[  ]          Debit[ X ]          Credit[  ]";
         case "CREDIT":
-          console.log("CREDIT");
           return "Cash[  ]          Debit[  ]          Credit[ X ]";
       }
     } else {
@@ -80,21 +77,27 @@ class Formatter {
     let itemString = "";
 
     // Format name, quantity, and price
+    let newName = "            ";
     let quantity = `${item["quantity"] === 1 ? "" : item["quantity"] + " x "}`;
     let price = `$${item["price"].toFixed(2)}`;
-    let spacer = this.lineWidth - (quantity.length + item["name"].length + price.length);
+    let spacer;
     let spacerString = "";
-    console.log("This is the item ", spacer);
+    if (item.category === "Special Combo") {
+      for (let comboItem of item["selectionList"].items) {
+        newName = newName.concat(comboItem, "   ");
+      }
+      spacer = this.lineWidth - (quantity.length + newName.length + price.length);
+    } else {
+      spacer = this.lineWidth - (quantity.length + item["name"].length + price.length);
+    }
 
     // Adds the correct amount of spacing between item name and price
-    console.log("This is the modifier", spacer);
     for (let i = 0; i < spacer; i++) {
       spacerString = spacerString.concat(" ");
     }
 
     // let nameWidth = this.lineWidth - quantity.length - spacer - price;
     // let nameHeight = Math.ceil(item["name"] / nameWidth);
-    // console.log("Name Height: ", nameHeight);
 
     // if (nameHeight > 1) {
     //   for (let i = 0; i < nameHeight; i++) {
@@ -109,34 +112,41 @@ class Formatter {
     //     }
     //   }
     // } else {
-    itemString = itemString.concat(quantity, item["name"], spacerString, price, "\n");
+    if (item.category === "Special Combo") {
+      itemString = itemString.concat(quantity, newName, spacerString, price, "\n");
+    } else {
+      itemString = itemString.concat(quantity, item["name"], spacerString, price, "\n");
+    }
+
     // }
 
     // Format selectionList
     for (let selectionList of item["selectionList"].items) {
+      if (item.category === "Special Combo") break; //Exits the selection list if item is special combo
       const bullet = "  - ";
       spacer = "    ";
       const selectionListWidth = this.lineWidth - bullet.length;
       const selectionListHeight = Math.ceil(selectionList.length / selectionListWidth);
 
-      if (selectionListHeight > 1) {
-        for (let i = 0; i < selectionListHeight; i++) {
-          let x = selectionList.slice(i * selectionListWidth, (i + 1) * selectionListWidth);
+      // if (selectionListHeight > 1) {
+      //   for (let i = 0; i < selectionListHeight; i++) {
+      //     let x = selectionList.slice(i * selectionListWidth, (i + 1) * selectionListWidth);
 
-          if (i === 0) {
-            itemString.concat(bullet, x, "\n");
-          } else {
-            itemString.concat(spacer, x, "\n");
-          }
-        }
-      } else {
-        itemString = itemString.concat(bullet, selectionList, "\n");
-      }
+      //     if (i === 0) {
+      //       itemString.concat(bullet, x, "\n");
+      //     } else {
+      //       itemString.concat(spacer, x, "\n");
+      //     }
+      //   }
+      // } else {
+
+      itemString = itemString.concat(bullet, selectionList, "\n");
+      // }
     }
 
     // Format modifiers
-    if (item.modifiable) {
-      itemString = itemString.concat("! ------------------- NOTE ------------------- !\n");
+    if (item.modifiers.length !== 0) {
+      itemString = itemString.concat("! ----------------- N O T E ------------------ !\n");
     }
 
     for (let modifier of item["modifiers"]) {
@@ -145,7 +155,6 @@ class Formatter {
       const modifierHeight = Math.ceil((modifier.name.length + 2) / modifierWidth);
       spacerString = "";
       spacer = this.lineWidth - (`${start}${modifier.name}]`.length + `$${modifier.price.toFixed(2)}`.length);
-      console.log(`${start}${modifier.name}]`.length + `$${modifier.price.toFixed(2)}`.length);
       for (let i = 0; i < spacer; i++) {
         spacerString = spacerString.concat(" ");
       }
@@ -172,9 +181,7 @@ class Formatter {
         );
       }
     }
-    console.log(itemString);
-
-    return itemString;
+    return itemString + "\n";
   }
 
   /**

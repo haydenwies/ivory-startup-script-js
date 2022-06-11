@@ -56,6 +56,7 @@ class Backend {
             orderQuery.docs.forEach((order) => {
               //For each printer we will need to generate a receipt
               for (const printer of printers) {
+                
                 //Execute the promise that generates a new template for the receipt data (since it's asynchronous task)
                 templateOnePromises.push(
                   new Promise((resolve, reject) => {
@@ -74,7 +75,7 @@ class Backend {
               }
 
               // Call all of the promises at once
-              Promise.allSettled(templateOnePromises)
+              Promise.allSettled([...templateOnePromises])
                 .then(async (results) => {
                   let printStatus = { allPrinted: true, failedPrinters: [] };
                   for (let result of results) {

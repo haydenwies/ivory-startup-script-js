@@ -16,6 +16,19 @@ class Formatter {
     return div;
   }
 
+  /**
+   * Makes a secondary divider (****) running the width of the receipt.
+   * @returns Divider string.
+   */
+   secondaryDivider(width) {
+    var div = "";
+
+    for (let i = 0; i < width; i++) {
+      div += "*";
+    }
+    return div;
+  }
+
   paidStatus(isPaid, paymentMethod) {
     if (isPaid) {
       switch (paymentMethod) {
@@ -149,34 +162,39 @@ class Formatter {
       itemString = itemString.concat("! ----------------- N O T E ------------------ !\n");
     }
 
-    for (let modifier of item["modifiers"]) {
-      const start = "[";
-      const modifierWidth = this.lineWidth - start.length;
-      const modifierHeight = Math.ceil((modifier.name.length + 2) / modifierWidth);
+    for (let modifier of item.modifiers) {
+      const priceBreak = "    ";
+      const modifierWidth = this.lineWidth - (('$'+`${modifier.price.toFixed(2)}`).length + priceBreak.length);
+      const modifierHeight = Math.ceil((modifier.name.length) / modifierWidth);
       spacerString = "";
-      spacer = this.lineWidth - (`${start}${modifier.name}]`.length + `$${modifier.price.toFixed(2)}`.length);
-      for (let i = 0; i < spacer; i++) {
-        spacerString = spacerString.concat(" ");
+      spacer = this.lineWidth - (`${modifier.name}]`.length + ('$'+`${modifier.price.toFixed(2)}`).length);
+      
+      if (spacer > 0) {
+        for (let i = 0; i < spacer; i++) {
+          spacerString = spacerString.concat(" ");
+        }
       }
 
-      if (modifierHeight > 1) {
-        for (let i = 0; i < modifierHeight; i++) {
-          let x = modifier.name.split(i * modifierWidth, (i + 1) * modifierWidth);
 
+      if (modifierHeight > 1) {
+        console.log("more than one")
+        for (let i = 0; i < modifierHeight; i++) {
+          const x = modifier.name.slice(i * modifierWidth, (i + 1) * modifierWidth);
+          
           if (i === 0) {
-            itemString = itemString.concat(start, x, "\n");
+            itemString = itemString.concat(x, priceBreak, '$'+`${modifier.price.toFixed(2)}`, "\n");
           } else if (i === modifierHeight) {
-            itemString = itemString.concat(spacer, x, ")\n");
+            itemString = itemString.concat(x, ")\n");
           } else {
-            itemString = itemString.concat(spacer, x, "\n");
+            itemString = itemString.concat(x, "\n");
           }
+          console.log(itemString)
         }
       } else {
         itemString = itemString.concat(
-          start,
-          `${modifier.name}]`,
+          `${modifier.name}`,
           spacerString,
-          `$${modifier.price.toFixed(2)}`,
+          '$'+`${modifier.price.toFixed(2)}`,
           "\n"
         );
       }

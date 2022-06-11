@@ -63,6 +63,7 @@ class Backend {
                       (reject = new TemplateOne(
                         printer.name,
                         printer.ip,
+                        printer.copies,
                         this.restaurantInfo,
                         order.data(),
                         resolve,
@@ -73,7 +74,7 @@ class Backend {
               }
 
               // Call all of the promises at once
-              Promise.allSettled([...templateOnePromises])
+              Promise.allSettled(templateOnePromises)
                 .then(async (results) => {
                   let printStatus = { allPrinted: true, failedPrinters: [] };
                   for (let result of results) {

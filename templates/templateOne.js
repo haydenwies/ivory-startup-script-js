@@ -7,7 +7,7 @@ class TemplateOne {
    * @param {*} resolve stores the success state
    * @param {*} reject stores the failed state
    */
-  constructor(printerName, ip, restaurantInfo, order, resolve, reject) {
+  constructor(printerName, ip, copies, restaurantInfo, order, resolve, reject) {
     console.log("Formatting receipt...");
 
     //ESCPOS libraries
@@ -88,84 +88,90 @@ class TemplateOne {
 
     console.log("Attempting to print...");
     //Attempts to connect to the thermal printer and execute the print
-    device.open((err) => {
-      try {
-        if (err) {
-          throw err;
-        } else {
-          printer
-            .beep(1, 5)
-            // Restaurant name
-            .align("ct")
-            .size(1.5, 1)
-            .text(`${restaurantInfo["name"]}`)
 
-            // Spacer
-            .feed()
+    for (i=0; i<copies; i++) {
 
-            // Time
-            .size(1.5, 2)
-            .text(finishTime)
-            .size(0.5, 1)
+      device.open((err) => {
+        try {
+          if (err) {
+            throw err;
+          } else {
+            printer
+              .beep(1, 5)
+              // Restaurant name
+              .align("ct")
+              .size(1.5, 1)
+              .text(`${restaurantInfo["name"]}`)
 
-            // Spacer x2
-            .text("\n")
+              // Spacer
+              .feed()
 
-            // Order number
-            .align("lt")
-            .text(`Phone number:  ${order["phoneNumber"]}`)
+              // Time
+              .size(1.5, 2)
+              .text(finishTime)
+              .size(0.5, 1)
 
-            // Order time
-            .text(`Order time:  ${orderTime}`)
+              // Spacer x2
+              .text("\n")
 
-            // Spacer
-            .feed()
+              // Order number
+              .align("lt")
+              .text(`Phone number:  ${order["phoneNumber"]}`)
 
-            // Order type
-            .text(orderType)
+              // Order time
+              .text(`Order time:  ${orderTime}`)
 
-            // Order note
-            .text(orderNote + "\n")
+              // Spacer
+              .feed()
 
-            // Payment Method
-            .text(isPaid)
+              // Order type
+              .text(orderType)
 
-            // Divider
-            .text(divider)
+              // Order note
+              .text(orderNote + "\n")
 
-            // Items
-            .size(0.5, 1)
-            .text("\n" + items())
+              // Payment Method
+              .text(isPaid)
 
-            // Divider
-            .text(divider)
+              // Divider
+              .text(divider)
 
-            // Totals
-            .text(formattedTotals + "\n")
+              // Items
+              .size(0.5, 1)
+              .text("\n" + items())
 
-            // Finish Time
-            .align("ct")
-            .size(1.5, 2)
-            .text(finishTime)
+              // Divider
+              .text(divider)
 
-            // Ending MEssage
-            .size(0.5, 1)
-            .text(endingMessage)
+              // Totals
+              .text(formattedTotals + "\n")
 
-            // Spacer x2
-            .text("\n\n")
+              // Finish Time
+              .align("ct")
+              .size(1.5, 2)
+              .text(finishTime)
 
-            // Cut Receipt & Close printer session
-            .cut()
-            .close();
-          resolve({ id: order.id, printerName, ip });
-          return resolve, reject;
+              // Ending MEssage
+              .size(0.5, 1)
+              .text(endingMessage)
+
+              // Spacer x2
+              .text("\n\n")
+
+              // Cut Receipt & Close printer session
+              .cut()
+              .close();
+            resolve({ id: order.id, printerName, ip });
+            // return resolve, reject;
+          }
+        } catch (err) {
+          reject({ id: order.id, printerName, ip, err });
+          // return resolve, reject;
         }
-      } catch (err) {
-        reject({ id: order.id, printerName, ip, err });
-        return resolve, reject;
-      }
-    });
+      });
+
+    }
+    return resolve, reject;
   }
 }
 

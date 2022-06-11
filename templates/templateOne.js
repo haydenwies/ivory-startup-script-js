@@ -7,7 +7,7 @@ class TemplateOne {
    * @param {*} resolve stores the success state
    * @param {*} reject stores the failed state
    */
-  constructor(ip, restaurantInfo, order, resolve, reject) {
+  constructor(printerName, ip, restaurantInfo, order, resolve, reject) {
     console.log("Formatting receipt...");
 
     //ESCPOS libraries
@@ -158,11 +158,11 @@ class TemplateOne {
             // Cut Receipt & Close printer session
             .cut()
             .close();
-          resolve("Printed successfully.");
+          resolve({ id: order.id, printerName, ip });
           return resolve, reject;
         }
       } catch (err) {
-        reject(["Failed to print.", err]);
+        reject({ id: order.id, printerName, ip, err });
         return resolve, reject;
       }
     });

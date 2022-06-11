@@ -30,14 +30,14 @@ class Backend {
   orderQueListener() {
     // const TemplateOne = require('./templates/templateOne')
     const TemplateOne = require("./templates/templateOne");
-    const printQue = this.db.collection("printQue");
+    const orderQue = this.db.collection("printQue");
 
     //Takes a snapshot of the collection at that current point in time
-    printQue.onSnapshot((querySnapshot) => {
+    orderQue.onSnapshot((querySnapshot) => {
       //Listens for when the querySnapshot document changes
       querySnapshot.docChanges().forEach(async (change) => {
+        console.log("An order has arrived:");
         if (change.type === "added") {
-          console.log("An order has arrived:");
           const data = change.doc.data(); //Gets the data of the changed doc
 
           const id = data["id"]; // Get order id
@@ -50,56 +50,25 @@ class Backend {
           if (orderQuery.empty) {
             console.log("no docs");
           } else {
-            let templateOnePromises = []; //Stores the array of printer promise requests to be executed by promise.allSetteled
-
             //Take the list of documents from the query and loop over them
             orderQuery.docs.forEach((order) => {
               //For each printer we will need to generate a receipt
               for (const printer of printers) {
                 //Execute the promise that generates a new template for the receipt data (since it's asynchronous task)
-                templateOnePromises.push(
-                  new Promise((resolve, reject) => {
-                    resolve,
-                      (reject = new TemplateOne(
-                        printer.name,
-                        printer.ip,
-                        this.restaurantInfo,
-                        order.data(),
-                        resolve,
-                        reject
-                      ));
-                  })
-                );
-              }
-
-              // Call all of the promises at once
-              Promise.allSettled([...templateOnePromises])
-                .then(async (results) => {
-                  let printStatus = { allPrinted: true, failedPrinters: [] };
-                  for (let result of results) {
-                    let { status, reason, value } = result;
-
-                    // Prepares the failed set of printers
-                    if (status === "rejected") {
-                      let { id, printerName, ip, err } = reason;
-                      printStatus.allPrinted = false;
-                      let date = new Date().toLocaleString("sv", { timeZoneName: "short" }).slice(0, 19);
-                      printStatus.id = id;
-                      printStatus.failedPrinters.push({ date, printerName, ip, err: `${err}` });
-                      console.log("\nFailed printer properties:\n");
-                      console.table({
-                        date,
-                        printerName,
-                        ip,
-                        err: `${err}`,
-                      });
-                    }
-                  }
-                  console.log("\nThe results of the promises:\n");
-                  console.table(results);
-                  // Confirms that all receipts have been printed
-                  if (printStatus.allPrinted) {
-                    let ids = [];
+                new Promise((resolve, reject) => {
+                  resolve,
+                    (reject = new TemplateOne(
+                      printer.ip,
+                      this.restaurantInfo,
+                      order.data(),
+                      resolve,
+                      reject
+                    ));
+                })
+                  .then(async (printerIp) => {
+                    console.log("Order Successfully Printed");
+                    const orderQuery = await this.db.collection("orders").where("id", "==", id).get();
+                    const ids = [];
 
                     //Gets all of the documents in the "orders" collection and loops through the doc data.
                     orderQuery.docs.forEach((doc) => {
@@ -111,19 +80,18 @@ class Backend {
                       this.db.collection("orders").doc(id).update({ printed: true });
                       await this.db.collection("printQue").doc(change.doc.id).delete();
                     });
-                    console.log("\nOrder successfully printed");
-                  } else if (!printStatus.allPrinted) {
-                    // Indicates that one or more receipts have failed to print.
-                    const x = printStatus;
+                  })
+
+                  //If printing error record the printer ip address and date, then store it to err collection
+                  .catch((err) => {
+                    let [ip, errorMsg] = err;
+                    const x = {};
+                    x[printer.ip] = new Date().toLocaleString("sv", { timeZoneName: "short" }).slice(0, 19);
+                    x.errorMsg = `${err}`;
                     this.db.collection("printQue").doc(id).delete();
                     this.db.collection("errLog").doc(id).set(x, { merge: true });
-                  } else {
-                    console.log("ERROR: NO RESPONSE FROM PRINTER.");
-                  }
-                })
-                .catch((err) => {
-                  console.log("\n\nWE HAVE AN ERROR\n\n", err);
-                });
+                  });
+              }
             });
           }
         }

@@ -56,6 +56,7 @@ class Backend {
             orderQuery.docs.forEach((order) => {
               //For each printer we will need to generate a receipt
               for (const printer of printers) {
+                
                 //Execute the promise that generates a new template for the receipt data (since it's asynchronous task)
                 templateOnePromises.push(
                   new Promise((resolve, reject) => {
@@ -63,6 +64,7 @@ class Backend {
                       (reject = new TemplateOne(
                         printer.name,
                         printer.ip,
+                        printer.copies,
                         this.restaurantInfo,
                         order.data(),
                         resolve,

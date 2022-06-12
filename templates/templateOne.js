@@ -7,7 +7,7 @@ class TemplateOne {
    * @param {*} resolve stores the success state
    * @param {*} reject stores the failed state
    */
-  constructor(printerName, ip, restaurantInfo, order, resolve, reject) {
+  constructor(printerName, ip, copies, restaurantInfo, order, resolve, reject) {
     console.log("Formatting receipt...");
 
     //ESCPOS libraries
@@ -32,6 +32,7 @@ class TemplateOne {
       }
       return items;
     };
+    items()
 
     //Formats the delivery fee
     const deliveryFee = () => {
@@ -64,6 +65,7 @@ class TemplateOne {
     };
 
     const divider = formatter.divider();
+    const secondaryDivider = formatter.secondaryDivider(24)
     //Properties of the receipt
     let { date, hours, meridian, minutes } = order.scheduledTime;
     const scheduledTime = order.isScheduledOrder ? `${hours}:${minutes} ${meridian}\n${date}` : "";
@@ -88,84 +90,104 @@ class TemplateOne {
 
     console.log("Attempting to print...");
     //Attempts to connect to the thermal printer and execute the print
-    device.open((err) => {
-      try {
-        if (err) {
-          throw err;
-        } else {
-          printer
-            .beep(1, 5)
-            // // Restaurant name
-            // .align("ct")
-            // .size(1.5, 1)
-            // .text(`${restaurantInfo["name"]}`)
 
-            // // Spacer
-            // .feed()
+  
+      device.open((err) => {
+        for (let i=0; i<copies; i++) {
+          try {
+            if (err) {
+              throw err;
+            } else {
+              printer
+              .beep(1, 5)
 
-            // // Time
-            // .size(1.5, 2)
-            // .text(finishTime)
-            // .size(0.5, 1)
+              // // Restaurant name
+              // .align("ct")
+              // .size(1.5, 1)
+              // if (i<1) {
+              //   printer
+              //   .text(`${restaurantInfo["name"]}`)
+              //   .size(.5, 1)
+              //   .text("www.harmonyrestaurant.ca")
+              // } else {
+              //   printer
+              //   .text(secondaryDivider)
+              // }
+              // printer
+              // // Spacer
+              // .feed()
 
-            // // Spacer x2
-            // .text("\n")
+              // // Time
+              // .size(1.5, 2)
+              // .text(finishTime)
+              // .size(0.5, 1)
 
-            // // Order number
-            // .align("lt")
-            // .text(`Phone number:  ${order["phoneNumber"]}`)
+              // // Spacer x2
+              // .text("\n")
 
-            // // Order time
-            // .text(`Order time:  ${orderTime}`)
+              // // Order number
+              // .align("lt")
+              // .text(`Phone number:  ${order["phoneNumber"]}`)
 
-            // // Spacer
-            // .feed()
+              // // Order time
+              // .text(`Order time:  ${orderTime}`)
 
-            // // Order type
-            // .text(orderType)
+              // // Spacer
+              // .feed()
 
-            // // Order note
-            // .text(orderNote + "\n")
+              // // Order type
+              // .text(orderType)
 
-            // // Payment Method
-            // .text(isPaid)
+              // // Order note
+              // .text(orderNote + "\n")
 
-            // // Divider
-            // .text(divider)
+              // // Payment Method
+              // .text(isPaid)
 
-            // // Items
-            // .size(0.5, 1)
-            // .text("\n" + items())
+              // // Divider
+              // .text(divider)
 
-            // // Divider
-            // .text(divider)
+              // // Items
+              // .size(0.5, 1)
+              // .text("\n" + items())
 
-            // // Totals
-            // .text(formattedTotals + "\n")
+              // // Divider
+              // .text(divider)
 
-            // // Finish Time
-            // .align("ct")
-            // .size(1.5, 2)
-            // .text(finishTime)
+              // // Totals
+              // .text(formattedTotals + "\n")
 
-            // // Ending MEssage
-            // .size(0.5, 1)
-            // .text(endingMessage)
+              // // Finish Time
+              // .align("ct")
+              // .size(1.5, 2)
+              // .text(finishTime)
 
-            // // Spacer x2
-            // .text("\n\n")
+              // // Ending MEssage
+              // if (i<1) {
+              //   printer
+              //   .size(0.5, 1)
+              //   .text(endingMessage)
+              // }
 
-            // // Cut Receipt & Close printer session
-            // .cut()
-            .close();
-          resolve({ id: order.id, printerName, ip });
-          return resolve, reject;
+              // // Spacer x2
+              // printer
+              // .text("\n\n")
+
+              // // Cut Receipt & Close printer session
+              .cut()
+              .close();
+              resolve({ id: order.id, printerName, ip });
+              // return resolve, reject;
+            }
+          } catch (err) {
+            reject({ id: order.id, printerName, ip, err });
+            // return resolve, reject;
+          }
         }
-      } catch (err) {
-        reject({ id: order.id, printerName, ip, err });
-        return resolve, reject;
-      }
-    });
+      });
+
+    
+    return resolve, reject;
   }
 }
 

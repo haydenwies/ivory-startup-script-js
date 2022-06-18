@@ -89,7 +89,7 @@ class Formatter {
     // Format name, quantity, and price
     let newName = "           ";
     let quantity = `${item["quantity"] === 1 ? "" : item["quantity"] + " x "}`;
-    let price = `$${item["price"].toFixed(2)}`;
+    let price = `$${(item.price * item.quantity).toFixed(2)}`;
     let spacer;
     let spacerString = "";
     if (item.category === "Special Combo") {
@@ -126,16 +126,18 @@ class Formatter {
     for (let modifier of item.modifiers) {
       const priceBreak = "    ";
       const modifierWidth =
-        this.lineWidth - (("$" + `${modifier.price.toFixed(2)}`).length + priceBreak.length);
+        this.lineWidth -
+        ((`$${(modifier.quantity * modifier.price).toFixed(2)}`).length + priceBreak.length);
       const modifierHeight = Math.ceil(modifier.name.length / modifierWidth);
       const modifyIndicator = "|--> ";
       spacerString = "";
       spacer =
         this.lineWidth -
-        (`${modifyIndicator}${modifier.name}`.length + ("$" + `${modifier.price.toFixed(2)}`).length);
+        (`${modifyIndicator}${modifier.name}`.length +
+          (`$${(modifier.quantity * modifier.price).toFixed(2)}`).length);
 
       if (spacer > 0) {
-        for (let i = 0; i < spacer; i++) {
+        for (let i = 1; i < spacer; i++) {
           spacerString = spacerString.concat(" ");
         }
       }

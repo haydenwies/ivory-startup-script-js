@@ -45,7 +45,6 @@ class Backend {
 
           // Fetch order from the "orders" collection by querying the id
           const orderQuery = await this.db.collection("orders").where("id", "==", id).get();
-
           // Check if the document was able to be queried
           if (orderQuery.empty) {
             console.log("no docs");
@@ -56,7 +55,7 @@ class Backend {
             orderQuery.docs.forEach((order) => {
               //For each printer we will need to generate a receipt
               for (const printer of printers) {
-                
+                console.log(this.restaurantInfo)
                 //Execute the promise that generates a new template for the receipt data (since it's asynchronous task)
                 templateOnePromises.push(
                   new Promise((resolve, reject) => {
@@ -65,6 +64,7 @@ class Backend {
                         printer.name,
                         printer.ip,
                         printer.copies,
+                        printer.beeps,
                         this.restaurantInfo,
                         order.data(),
                         resolve,
@@ -115,6 +115,7 @@ class Backend {
                     });
                     console.log("\nOrder successfully printed");
                   } else if (!printStatus.allPrinted) {
+                    console.log(printStatus);
                     // Indicates that one or more receipts have failed to print.
                     const x = printStatus;
                     this.db.collection("printQue").doc(id).delete();

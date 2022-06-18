@@ -20,7 +20,7 @@ class Formatter {
    * Makes a secondary divider (****) running the width of the receipt.
    * @returns Divider string.
    */
-   secondaryDivider(width) {
+  secondaryDivider(width) {
     var div = "";
 
     for (let i = 0; i < width; i++) {
@@ -40,7 +40,7 @@ class Formatter {
           return "Cash[  ]          Debit[  ]          Credit[ X ]";
       }
     } else {
-      return "Cash[  ]          Debit[  ]          Credit[  ]";
+      return "Cash[  ]           Debit[  ]          Credit[  ]";
     }
   }
 
@@ -54,12 +54,9 @@ class Formatter {
     if (orderType === "PICKUP") {
       return "PICKUP";
     } else if (orderType === "DELIVERY") {
-      const x = "DELIVERY:  ";
-      if (address.length > this.lineWidth - x.length) {
-        return `DELIVERY:\n${address}`;
-      } else {
-        return `${x}${address}`;
-      }
+      return `DELIVERY`;
+    } else if (orderType === "DINE_INN") {
+      return "DINE INN";
     } else {
       return null;
     }
@@ -90,18 +87,20 @@ class Formatter {
     let itemString = "";
 
     // Format name, quantity, and price
-    let newName = "            ";
+    let newName = "           ";
     let quantity = `${item["quantity"] === 1 ? "" : item["quantity"] + " x "}`;
     let price = `$${item["price"].toFixed(2)}`;
     let spacer;
     let spacerString = "";
     if (item.category === "Special Combo") {
+      //Formats it horizontally
       for (let comboItem of item["selectionList"].items) {
         newName = newName.concat(comboItem, "   ");
       }
-      spacer = this.lineWidth - (quantity.length + newName.length + price.length);
+
+      spacer = this.lineWidth - (quantity.length + newName.length + price.length); //Calculate the spacing length of the name horizontally
     } else {
-      spacer = this.lineWidth - (quantity.length + item["name"].length + price.length);
+      spacer = this.lineWidth - (quantity.length + item["name"].length + price.length); //Calculate the spacing length of the name vertically
     }
 
     // Adds the correct amount of spacing between item name and price
@@ -109,96 +108,69 @@ class Formatter {
       spacerString = spacerString.concat(" ");
     }
 
-    // let nameWidth = this.lineWidth - quantity.length - spacer - price;
-    // let nameHeight = Math.ceil(item["name"] / nameWidth);
-
-    // if (nameHeight > 1) {
-    //   for (let i = 0; i < nameHeight; i++) {
-    //     itemString = itemString.concat(item["name"].slice(i * nameWidth, (i + 1) * nameWidth));
-
-    //     if (i === 0) {
-    //       itemString = itemString.concat(spacerString, price, "\n");
-    //     } else if (i === nameHeight) {
-    //       itemString = itemString.concat(quantity, "\n");
-    //     } else {
-    //       itemString = itemString.concat("\n");
-    //     }
-    //   }
-    // } else {
     if (item.category === "Special Combo") {
       itemString = itemString.concat(quantity, newName, spacerString, price, "\n");
     } else {
       itemString = itemString.concat(quantity, item["name"], spacerString, price, "\n");
     }
 
-    // }
-
     // Format selectionList
     for (let selectionList of item["selectionList"].items) {
       if (item.category === "Special Combo") break; //Exits the selection list if item is special combo
       const bullet = "  - ";
       spacer = "    ";
-      const selectionListWidth = this.lineWidth - bullet.length;
-      const selectionListHeight = Math.ceil(selectionList.length / selectionListWidth);
-
-      // if (selectionListHeight > 1) {
-      //   for (let i = 0; i < selectionListHeight; i++) {
-      //     let x = selectionList.slice(i * selectionListWidth, (i + 1) * selectionListWidth);
-
-      //     if (i === 0) {
-      //       itemString.concat(bullet, x, "\n");
-      //     } else {
-      //       itemString.concat(spacer, x, "\n");
-      //     }
-      //   }
-      // } else {
-
       itemString = itemString.concat(bullet, selectionList, "\n");
-      // }
     }
 
     // Format modifiers
-    if (item.modifiers.length !== 0) {
-      itemString = itemString.concat("! ----------------- N O T E ------------------ !\n");
-    }
-
     for (let modifier of item.modifiers) {
       const priceBreak = "    ";
-      const modifierWidth = this.lineWidth - (('$'+`${modifier.price.toFixed(2)}`).length + priceBreak.length);
-      const modifierHeight = Math.ceil((modifier.name.length) / modifierWidth);
+      const modifierWidth =
+        this.lineWidth - (("$" + `${modifier.price.toFixed(2)}`).length + priceBreak.length);
+      const modifierHeight = Math.ceil(modifier.name.length / modifierWidth);
+      const modifyIndicator = "|--> ";
       spacerString = "";
-      spacer = this.lineWidth - (`${modifier.name}]`.length + ('$'+`${modifier.price.toFixed(2)}`).length);
-      
+      spacer =
+        this.lineWidth -
+        (`${modifyIndicator}${modifier.name}`.length + ("$" + `${modifier.price.toFixed(2)}`).length);
+
       if (spacer > 0) {
         for (let i = 0; i < spacer; i++) {
           spacerString = spacerString.concat(" ");
         }
       }
 
-
       if (modifierHeight > 1) {
-        console.log("more than one")
         for (let i = 0; i < modifierHeight; i++) {
-          const x = modifier.name.slice(i * modifierWidth, (i + 1) * modifierWidth);
-          
+          const x = `${modifyIndicator}${modifier.name}`.slice(i * modifierWidth, (i + 1) * modifierWidth);
+
           if (i === 0) {
-            itemString = itemString.concat(x, priceBreak, '$'+`${modifier.price.toFixed(2)}`, "\n");
+            itemString = itemString.concat(
+              x,
+              priceBreak,
+              !item.flatFeeModifierOn && (modifier.type === "Add" || modifier.type === "No Add")
+                ? "$0.00"
+                : `$${modifier.price.toFixed(2)}`,
+              "\n"
+            );
           } else if (i === modifierHeight) {
             itemString = itemString.concat(x, ")\n");
           } else {
             itemString = itemString.concat(x, "\n");
           }
-          console.log(itemString)
         }
       } else {
         itemString = itemString.concat(
-          `${modifier.name}`,
+          `${modifyIndicator}${modifier.name}`,
           spacerString,
-          '$'+`${modifier.price.toFixed(2)}`,
+          item.flatFeeModifierOn && (modifier.type === "Add" || modifier.type === "No Add") //Doesn't show price of items if there is a flat fee modify price
+            ? "$0.00"
+            : `$${modifier.price.toFixed(2)}`,
           "\n"
         );
       }
     }
+    console.log(itemString);
     return itemString + "\n";
   }
 

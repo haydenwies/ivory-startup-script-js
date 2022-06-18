@@ -7,7 +7,7 @@ class TemplateOne {
    * @param {*} resolve stores the success state
    * @param {*} reject stores the failed state
    */
-  constructor(printerName, ip, copies, restaurantInfo, order, resolve, reject) {
+  constructor(printerName, ip, copies, beeps, restaurantInfo, order, resolve, reject) {
     console.log("Formatting receipt...");
 
     //ESCPOS libraries
@@ -32,7 +32,7 @@ class TemplateOne {
       }
       return items;
     };
-    items()
+    items();
 
     //Formats the delivery fee
     const deliveryFee = () => {
@@ -65,13 +65,14 @@ class TemplateOne {
     };
 
     const divider = formatter.divider();
-    const secondaryDivider = formatter.secondaryDivider(24)
+    const secondaryDivider = formatter.secondaryDivider(24);
     //Properties of the receipt
     let { date, hours, meridian, minutes } = order.scheduledTime;
     const scheduledTime = order.isScheduledOrder ? `${hours}:${minutes} ${meridian}\n${date}` : "";
     const orderTime = `${order.time[0]}, ${order.date}`;
     const finishTime = order.isScheduledOrder ? scheduledTime : order.finishTime;
     const orderType = formatter.orderType(order["orderType"], order["deliveryAddress"]);
+    const deliveryAddress = order.deliveryAddress;
     const orderNote = formatter.note(order["note"]);
     const isPaid = formatter.paidStatus(order.paid, order.paymentMethod);
     const endingMessage = "Thank You & Come Again :)";
@@ -90,103 +91,99 @@ class TemplateOne {
 
     console.log("Attempting to print...");
     //Attempts to connect to the thermal printer and execute the print
+    device.open((err) => {
+      for (let i = 0; i < copies; i++) {
+        try {
+          if (err) {
+            throw err;
+          } else {
+            printer.style("B");
+            if (i === 0) {
+              printer.beep(beeps, 5);
+            }
+            // Restaurant name
+            printer
+              .align("ct")
+              .size(1.5, 1)
+              .text(`${restaurantInfo["name"]}`)
+              .size(0.5, 1)
+              .text("www.harmonyrestaurant.ca");
+            if (i === 1) {
+              printer.size(1.5, 1).text(secondaryDivider);
+            }
+            printer
+              // Spacer
+              .feed()
 
-  
-      device.open((err) => {
-        for (let i=0; i<copies; i++) {
-          try {
-            if (err) {
-              throw err;
-            } else {
-              printer
-              .beep(1, 5)
+              // Time
+              .size(1.5, 2)
+              .text(finishTime)
+              .text(orderType === "DINE INN" ? "------- DINE INN -------" : "") //Indicates a dine inn order
+              .size(1.5, 1)
+              .text(orderType === "DELIVERY" ? deliveryAddress + "\n========================" : "")
+              .size(0.5, 1)
 
-              // // Restaurant name
-              // .align("ct")
-              // .size(1.5, 1)
-              // if (i<1) {
-              //   printer
-              //   .text(`${restaurantInfo["name"]}`)
-              //   .size(.5, 1)
-              //   .text("www.harmonyrestaurant.ca")
-              // } else {
-              //   printer
-              //   .text(secondaryDivider)
-              // }
-              // printer
-              // // Spacer
-              // .feed()
+              // Spacer x2
+              .text("\n")
 
-              // // Time
-              // .size(1.5, 2)
-              // .text(finishTime)
-              // .size(0.5, 1)
+              // Order number
+              .align("lt")
+              .text(`Phone number:  ${order["phoneNumber"]}`)
 
-              // // Spacer x2
-              // .text("\n")
+              // Order time
+              .text(`Order time:  ${orderTime}`)
 
-              // // Order number
-              // .align("lt")
-              // .text(`Phone number:  ${order["phoneNumber"]}`)
+              // Order type
+              .text(orderType)
 
-              // // Order time
-              // .text(`Order time:  ${orderTime}`)
+              // Spacer
+              .feed()
 
-              // // Spacer
-              // .feed()
+              // Order note
+              .text(orderNote + "\n")
 
-              // // Order type
-              // .text(orderType)
+              // Payment Method
+              .text(isPaid)
 
-              // // Order note
-              // .text(orderNote + "\n")
+              // Divider
+              .text(divider)
 
-              // // Payment Method
-              // .text(isPaid)
+              // Items
+              .size(0.5, 1)
+              .text("\n" + items())
 
-              // // Divider
-              // .text(divider)
+              // Divider
+              .text(divider)
 
-              // // Items
-              // .size(0.5, 1)
-              // .text("\n" + items())
+              // Totals
+              .text(formattedTotals + "\n")
 
-              // // Divider
-              // .text(divider)
+              // Finish Time
+              .align("ct")
+              .size(1.5, 2)
+              .text(finishTime)
 
-              // // Totals
-              // .text(formattedTotals + "\n")
+              // Ending Message
+              .size(0.5, 1)
+              .text(endingMessage);
 
-              // // Finish Time
-              // .align("ct")
-              // .size(1.5, 2)
-              // .text(finishTime)
+            // Spacer x2
+            printer
+              .text("\n\n")
 
-              // // Ending MEssage
-              // if (i<1) {
-              //   printer
-              //   .size(0.5, 1)
-              //   .text(endingMessage)
-              // }
-
-              // // Spacer x2
-              // printer
-              // .text("\n\n")
-
-              // // Cut Receipt & Close printer session
+              // Cut Receipt & Close printer session
               .cut()
               .close();
-              resolve({ id: order.id, printerName, ip });
-              // return resolve, reject;
-            }
-          } catch (err) {
-            reject({ id: order.id, printerName, ip, err });
+            resolve({ id: order.id, printerName, ip });
             // return resolve, reject;
           }
+        } catch (err) {
+          reject({ id: order.id, printerName, ip, err });
+          // return resolve, reject;
         }
-      });
+      }
+    });
 
-    
     return resolve, reject;
   }
 }

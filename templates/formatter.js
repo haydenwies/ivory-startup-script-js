@@ -125,9 +125,9 @@ class Formatter {
     // Format modifiers
     for (let modifier of item.modifiers) {
       const priceBreak = "    ";
-      const modifierWidth =
-        this.lineWidth -
-        ((`$${(modifier.quantity * modifier.price).toFixed(2)}`).length + priceBreak.length);
+      const modifierWidth = modifier.type === "swap" ? 
+        this.lineWidth - ((`$${(modifier.price).toFixed(2)}`).length + priceBreak.length) : 
+        this.lineWidth - ((`$${(modifier.quantity * modifier.price).toFixed(2)}`).length + priceBreak.length)
       const modifierHeight = Math.ceil(modifier.name.length / modifierWidth);
       const modifyIndicator = "|--> ";
       spacerString = "";
@@ -137,14 +137,14 @@ class Formatter {
           (`$${(modifier.quantity * modifier.price).toFixed(2)}`).length);
 
       if (spacer > 0) {
-        for (let i = 1; i < spacer; i++) {
+        for (let i = 0; i < spacer; i++) {
           spacerString = spacerString.concat(" ");
         }
       }
 
       if (modifierHeight > 1) {
         for (let i = 0; i < modifierHeight; i++) {
-          const x = `${modifyIndicator}${modifier.name}`.slice(i * modifierWidth, (i + 1) * modifierWidth);
+          const x = `${modifyIndicator}${modifier.name}`.slice(i * (modifierWidth), (i + 1) * (modifierWidth));
 
           if (i === 0) {
             itemString = itemString.concat(

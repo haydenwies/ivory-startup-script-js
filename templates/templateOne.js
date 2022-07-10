@@ -71,7 +71,7 @@ class TemplateOne {
     const scheduledTime = order.isScheduledOrder ? `${hours}:${minutes} ${meridian}\n${date}` : "";
     const orderTime = `${order.time[0]}, ${order.date}`;
     const finishTime = order.isScheduledOrder ? scheduledTime : order.finishTime;
-    const orderType = formatter.orderType(order["orderType"], order["deliveryAddress"]);
+    const orderType = formatter.orderType(order.orderType);
     const deliveryAddress = order.deliveryAddress;
     const orderNote = formatter.note(order["note"]);
     const isPaid = formatter.paidStatus(order.paid, order.paymentMethod);
@@ -107,7 +107,7 @@ class TemplateOne {
               .size(1.5, 1)
               .text(`${restaurantInfo["name"]}`)
               .size(0.5, 1)
-              .text("www.harmonyrestaurant.ca");
+              .text(`${restaurantInfo.website}`);
             if (i === 1) {
               printer.size(1.5, 1).text(secondaryDivider);
             }
@@ -174,11 +174,11 @@ class TemplateOne {
               // Cut Receipt & Close printer session
               .cut()
               .close();
-            resolve({ id: order.id, printerName, ip });
+            resolve({ id: order.id, printerName, printId: order.printId, ip });
             // return resolve, reject;
           }
         } catch (err) {
-          reject({ id: order.id, printerName, ip, err });
+          reject({ id: order.id, printerName, ip, printId: order.printId, err });
           // return resolve, reject;
         }
       }

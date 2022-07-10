@@ -1,2 +1,6 @@
 credentials.json
 ./node_modules
+./IvoryCredentials.json
+./HarmonyCredentials.json
+./TiePinkCredentials.json
+ProjectCredentials

@@ -19,7 +19,7 @@
   "dependencies": {
     "escpos": "^3.0.0-alpha.6",
     "escpos-network": "^3.0.0-alpha.5",
-    "firebase-admin": "^10.2.0",
+    "firebase-admin": "^10.3.0",
     "nodemon": "^2.0.16"
   }
 }

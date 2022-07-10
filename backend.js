@@ -28,9 +28,18 @@ class Backend {
   /**
    * Firestore collection listener to listen to change events in the printQue collection
    */
-  orderQueListener() {
+  async orderQueListener() {
+    // const TemplateOne = require('./templates/templateOne')
     const TemplateOne = require("./templates/templateOne");
     const printQue = this.db.collection("printQue");
+
+    // Delete printQue items
+    const oldDocs = await printQue.get()
+    if(oldDocs.exists) {
+      for (doc in oldDocs) {
+        doc.delete();
+      };
+    };
 
     //Takes a snapshot of the collection at that current point in time
     printQue.onSnapshot((querySnapshot) => {

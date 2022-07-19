@@ -196,7 +196,7 @@ class Formatter {
   priceStatement(priceLabel, price = Number) {
     var spacer = "";
     let x;
-    if (priceLabel === "Before tax discount" || priceLabel === "After tax discount") {
+    if (priceLabel === "Discount") {
       x = this.lineWidth - priceLabel.length - 1 - `-$${price.toFixed(2)}`.length;
     } else {
       x = this.lineWidth - priceLabel.length - 1 - `$${price.toFixed(2)}`.length;
@@ -206,7 +206,7 @@ class Formatter {
       spacer += " ";
     }
 
-    if (priceLabel === "Before tax discount" || priceLabel === "After tax discount") {
+    if (priceLabel === "Discount") {
       return `${priceLabel}:${spacer}-$${price.toFixed(2)}`;
     } else {
       return `${priceLabel}:${spacer}$${price.toFixed(2)}`;

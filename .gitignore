@@ -1,5 +1,5 @@
 credentials.json
-./node_modules
+node_modules
 ./IvoryCredentials.json
 ./HarmonyCredentials.json
 ./TiePinkCredentials.json

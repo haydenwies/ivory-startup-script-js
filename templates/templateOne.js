@@ -47,7 +47,7 @@ class TemplateOne {
     //Formats the beforeTaxDiscount
     const beforeTaxDiscount = () => {
       if (order["beforeTaxDiscount"] !== 0) {
-        const beforeTaxDiscount = formatter.priceStatement("Before tax discount", order["beforeTaxDiscount"]);
+        const beforeTaxDiscount = formatter.priceStatement("Discount", order["beforeTaxDiscount"]);
         return beforeTaxDiscount;
       } else {
         return "";
@@ -57,7 +57,7 @@ class TemplateOne {
     //Formats the afterTaxDiscount
     const afterTaxDiscount = () => {
       if (order["afterTaxDiscount"] !== 0) {
-        const afterTaxDiscount = formatter.priceStatement("After tax discount", order["afterTaxDiscount"]);
+        const afterTaxDiscount = formatter.priceStatement("Discount", order["afterTaxDiscount"]);
         return afterTaxDiscount;
       } else {
         return "";

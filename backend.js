@@ -12,16 +12,16 @@ class Backend {
     });
     this.db = getFirestore(); //Gets a reference to firestore
 
-    //Pulls restaurant info data
+    this.restaurantInfo = { website: "", name: "" };
+
+    // Pulls restaurant info data
     const restaurantInfo = async () => {
       const doc = await this.db.collection("general").doc("restaurantInfo").get();
       if (doc.exists) {
         this.restaurantInfo = doc.data();
         if (this.restaurantInfo.name === undefined || this.restaurantInfo.website === undefined) {
+          this.restaurantInfo = { website: "", name: "" };
         }
-        this.restaurantInfo = { wbesite: "", name: "" };
-      } else {
-        this.restaurantInfo = { wbesite: "", name: "" };
       }
     };
 
@@ -35,17 +35,6 @@ class Backend {
     const TemplateOne = require("./templates/templateOne");
     const printQue = this.db.collection("printQue");
     let printStatus = { allPrinted: true, failedPrinters: [], id: "", printId: "", otherErrors: [] };
-
-    // Deletes any pre-existing print-que documents
-    const oldDocs = await printQue.get();
-    if (oldDocs.exists) {
-      console.log(
-        "\n// -------------------------- DELETING OLD PRINT QUE DOCS -------------------------- //\n"
-      );
-      for (doc in oldDocs) {
-        doc.delete();
-      }
-    }
 
     //Takes a snapshot of the collection at that current point in time
     printQue.onSnapshot((querySnapshot) => {
@@ -115,7 +104,6 @@ class Backend {
                   //We loop over all of the results and record what the status is
                   for (let result of results) {
                     let { status } = result;
-
                     //A print request has failed to exectute
                     if (status === "rejected") {
                       let { reason } = result;
@@ -159,7 +147,7 @@ class Backend {
 
                     // Indicates if all printers were successful
                     console.log(
-                      " \n\n// -------------------------- ORDERS PRINTED SUCCESSFULLY -------------------------- //\n\n"
+                      " \n\n// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ORDERS PRINTED SUCCESSFULLY !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! //\n\n"
                     );
                   }
                   //One or more receipts have failed to print. Now store the error in the errLog

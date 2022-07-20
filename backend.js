@@ -10,7 +10,6 @@ class Backend {
     initializeApp({
       credential: cert(serviceAccount),
     });
-
     this.db = getFirestore(); //Gets a reference to firestore
 
     //Pulls restaurant info data
@@ -18,10 +17,14 @@ class Backend {
       const doc = await this.db.collection("general").doc("restaurantInfo").get();
       if (doc.exists) {
         this.restaurantInfo = doc.data();
+        if (this.restaurantInfo.name === undefined || this.restaurantInfo.website === undefined) {
+        }
+        this.restaurantInfo = { wbesite: "", name: "" };
       } else {
-        this.restaurantInfo = null;
+        this.restaurantInfo = { wbesite: "", name: "" };
       }
     };
+
     restaurantInfo(); //Call the method to get restaurant info
   }
 
@@ -29,17 +32,20 @@ class Backend {
    * Firestore collection listener to listen to change events in the printQue collection
    */
   async orderQueListener() {
-    // const TemplateOne = require('./templates/templateOne')
     const TemplateOne = require("./templates/templateOne");
     const printQue = this.db.collection("printQue");
+    let printStatus = { allPrinted: true, failedPrinters: [], id: "", printId: "", otherErrors: [] };
 
-    // Delete printQue items
-    const oldDocs = await printQue.get()
-    if(oldDocs.exists) {
+    // Deletes any pre-existing print-que documents
+    const oldDocs = await printQue.get();
+    if (oldDocs.exists) {
+      console.log(
+        "\n// -------------------------- DELETING OLD PRINT QUE DOCS -------------------------- //\n"
+      );
       for (doc in oldDocs) {
         doc.delete();
-      };
-    };
+      }
+    }
 
     //Takes a snapshot of the collection at that current point in time
     printQue.onSnapshot((querySnapshot) => {
@@ -52,8 +58,15 @@ class Backend {
           //Gets the id and printer info for the print request
           const data = change.doc.data(); //Gets the data of the changed doc
           const id = data["id"]; // Get order id
-          const printers = data["printers"]; // Get printers
-          console.log("THIS IS THE PRINTER DATA", data);
+          const printers = data["printers"]; // Get printers from the printQue doc
+
+          // Checks for failed name property in
+          for (let printer of printers) {
+            if (printer.name === undefined) {
+              printer.name = "";
+              printStatus.otherErrors.push("Printer name undefined");
+            }
+          }
 
           // Fetch order from the "orders" collection by querying the id
           const orderQuery = await this.db.collection("orders").where("id", "==", id).get();
@@ -73,12 +86,12 @@ class Backend {
                   new Promise((resolve, reject) => {
                     resolve,
                       (reject = new TemplateOne(
-                        printer.name,
-                        printer.ip,
-                        printer.copies,
-                        printer.beeps,
-                        this.restaurantInfo,
-                        order.data(),
+                        printer.name !== undefined ? printer.name : "",
+                        printer.ip !== undefined ? printer.ip : "192.168.0.1",
+                        printer.copies !== undefined ? printer.copies : "1",
+                        printer.beeps !== undefined ? printer.beeps : "1",
+                        this.restaurantInfo !== undefined ? this.restaurantInfo : { wbesite: "", name: "" },
+                        order.data() !== undefined ? order.data() : {},
                         resolve,
                         reject
                       ));
@@ -88,20 +101,24 @@ class Backend {
 
               // Execute printing process (load all of the promises) and wait for all of them to be finished before continuing.
               Promise.allSettled([...templateOnePromises])
+
                 //Promise.allSettled doesn't have a catch case typically
                 .then(async (results) => {
                   // Indicates whether the printers succesfully printed or failed and gives a list of failed printers.
-                  let printStatus = { allPrinted: true, failedPrinters: [], id: "", printId: "" };
+
+                  // Displays a table of printer request results
+                  console.log(
+                    "\n// -------------------------- RESULTS OF THE PRINTER PROMISES -------------------------- //\n",
+                    results
+                  );
 
                   //We loop over all of the results and record what the status is
                   for (let result of results) {
                     let { status } = result;
-                    console.log("THIS IS THE RESULT", result);
 
                     //A print request has failed to exectute
                     if (status === "rejected") {
                       let { reason } = result;
-                      console.log("THIS SI THE REASON", reason);
                       let date = new Date().toLocaleString("sv", { timeZoneName: "short" }).slice(0, 19); //Get the current date and time
 
                       //Fills in a list of failed printers
@@ -112,7 +129,9 @@ class Backend {
                       printStatus.failedPrinters.push({ date, printerName, ip, err: `${err}` });
 
                       // Displays out what the failed printer properties are
-                      console.log("\nFailed printer properties:\n");
+                      console.log(
+                        ` \n\n// -------------------------- ${printerName} FAILED -------------------------- //\n\n`
+                      );
                       console.table({
                         date,
                         printerName,
@@ -122,10 +141,6 @@ class Backend {
                       });
                     }
                   } // End of printer results
-
-                  // Displays a table of printer request results
-                  console.log("\nThe results of the promises:\n");
-                  console.table(results);
 
                   //All receipts printed successfully
                   if (printStatus.allPrinted) {
@@ -142,26 +157,34 @@ class Backend {
                       await this.db.collection("printQue").doc(change.doc.id).delete();
                     });
 
-                    console.log("\nOrder successfully printed");
+                    // Indicates if all printers were successful
+                    console.log(
+                      " \n\n// -------------------------- ORDERS PRINTED SUCCESSFULLY -------------------------- //\n\n"
+                    );
                   }
-
                   //One or more receipts have failed to print. Now store the error in the errLog
                   else if (!printStatus.allPrinted) {
-                    console.log(printStatus); //Lists out the status of all the print requests.
+                    // Indicates one or more of the receipts failed
+                    console.log(
+                      " \n\n// -------------------------- ONE OR MORE ORDERS FAILED TO PRINT -------------------------- //\n\n",
+                      printStatus
+                    );
 
-                    // Deletes order from the printQue list so it won't be printed again and uploads an error message to the error log collection
-                    await this.db.collection("printQue").doc(id).delete();
-                    await this.db
-                      .collection("errLog")
-                      .doc(printStatus.printId)
-                      .set(printStatus, { merge: true });
-
-                    console.log("THIS SHOULD BE LAST");
+                    try {
+                      // Deletes order from the printQue list so it won't be printed again and uploads an error message to the error log collection
+                      await this.db.collection("printQue").doc(id).delete();
+                      await this.db
+                        .collection("errLog")
+                        .doc(printStatus.printId)
+                        .set(printStatus, { merge: true });
+                    } catch (err) {
+                      await this.db.collection("errLog").doc().set(`${err}`, { merge: true });
+                    }
                   }
                 })
                 //This catch case will likely never be executed, but if it does I don't understand JS.
-                .catch((err) => {
-                  console.log("\n\nWE HAVE AN ERROR\n\n", err);
+                .catch(async (err) => {
+                  console.error("\n\nWE HAVE AN ERROR\n\n", err);
                 });
             });
           }

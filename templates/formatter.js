@@ -91,12 +91,13 @@ class Formatter {
     let price = `$${(item.price * item.quantity).toFixed(2)}`;
     let spacer;
     let spacerString = "";
+
+    //Horizontal combo number feature
     if (item.category === "Special Combo") {
       //Formats it horizontally
       for (let comboItem of item["selectionList"].items) {
         newName = newName.concat(comboItem, "   ");
       }
-
       spacer = this.lineWidth - (quantity.length + newName.length + price.length); //Calculate the spacing length of the name horizontally
     } else {
       spacer = this.lineWidth - (quantity.length + item["name"].length + price.length); //Calculate the spacing length of the name vertically
@@ -122,68 +123,66 @@ class Formatter {
     }
 
     // Format modifiers
-    if(item.modifiers.length > 0){
-      console.log("WE SHOULD NOT BE HERE")
-    for (let modifier of item.modifiers) {
-      const priceBreak = "    ";
-      //Calculates available width of the modifier name
-      const modifierWidth = this.lineWidth - (`$${modifier.price.toFixed(2)}`.length + priceBreak.length);
-      const modifyIndicator = "|-> ";
-      const modifierHeight = Math.ceil(
-        (modifyIndicator.length + modifier.name.length) / modifierWidth
-      ); //Checks if the modifier name greater than the avaiable space
-      spacerString = "";
+    if (item.modifiers.length > 0) {
+      // Loop through all of the modifiers
+      for (let modifier of item.modifiers) {
+        const priceBreak = "    ";
+        //Calculates available width of the modifier name
+        const modifierWidth = this.lineWidth - (`$${modifier.price.toFixed(2)}`.length + priceBreak.length);
+        const modifyIndicator = "|-> ";
+        const modifierHeight = Math.ceil((modifyIndicator.length + modifier.name.length) / modifierWidth); //Checks if the modifier name greater than the avaiable space
+        spacerString = "";
 
-      //Determines the number of spaces needed between name and price
-      spacer =
-        this.lineWidth -
-        (modifyIndicator.length +
-          `${modifier.quantity} x `.length +
-          modifier.name.length +
-          `$${modifier.price.toFixed(2)}`.length);
+        //Determines the number of spaces needed between name and price
+        spacer =
+          this.lineWidth -
+          (modifyIndicator.length +
+            `${modifier.quantity} x `.length +
+            modifier.name.length +
+            `$${modifier.price.toFixed(2)}`.length);
 
-      //Adds the space between name and price
-      if (spacer > 0) {
-        for (let i = 0; i < spacer; i++) {
-          spacerString = spacerString.concat(" ");
-        }
-      }
-
-      //Formats name and price when the name overflows line width
-      if (modifierHeight > 1) {
-        for (let i = 0; i < modifierHeight; i++) {
-          const x = `${modifyIndicator}${modifier.quantity} x ${modifier.name}`.slice(
-            i * modifierWidth,
-            (i + 1) * modifierWidth
-          ); //Gets the overflowed text from the modifier name
-
-          if (i === 0) {
-            itemString = itemString.concat(
-              x,
-              priceBreak,
-              !item.flatFeeModifierOn && (modifier.type === "Add" || modifier.type === "No Add") //Checks to see if charge the normal fee or a base flat fee
-                ? "$0.00"
-                : `$${modifier.price.toFixed(2)}`,
-              "\n"
-            );
-          } else if (i === modifierHeight) {
-            itemString = itemString.concat(x, ")\n");
-          } else {
-            itemString = itemString.concat(x, "\n");
+        //Adds the space between name and price
+        if (spacer > 0) {
+          for (let i = 0; i < spacer; i++) {
+            spacerString = spacerString.concat(" ");
           }
         }
-      } else {
-        itemString = itemString.concat(
-          `${modifyIndicator}${modifier.quantity} x ${modifier.name}`,
-          spacerString,
-          item.flatFeeModifierOn && (modifier.type === "Add" || modifier.type === "No Add") //Doesn't show price of items if there is a flat fee modify price
-            ? "$0.00"
-            : `$${modifier.price.toFixed(2)}`,
-          "\n"
-        );
+
+        //Formats name and price when the name overflows line width
+        if (modifierHeight > 1) {
+          for (let i = 0; i < modifierHeight; i++) {
+            const x = `${modifyIndicator}${modifier.quantity} x ${modifier.name}`.slice(
+              i * modifierWidth,
+              (i + 1) * modifierWidth
+            ); //Gets the overflowed text from the modifier name
+
+            if (i === 0) {
+              itemString = itemString.concat(
+                x,
+                priceBreak,
+                !item.flatFeeModifierOn && (modifier.type === "Add" || modifier.type === "No Add") //Checks to see if charge the normal fee or a base flat fee
+                  ? "$0.00"
+                  : `$${modifier.price.toFixed(2)}`,
+                "\n"
+              );
+            } else if (i === modifierHeight) {
+              itemString = itemString.concat(x, ")\n");
+            } else {
+              itemString = itemString.concat(x, "\n");
+            }
+          }
+        } else {
+          itemString = itemString.concat(
+            `${modifyIndicator}${modifier.quantity} x ${modifier.name}`,
+            spacerString,
+            item.flatFeeModifierOn && (modifier.type === "Add" || modifier.type === "No Add") //Doesn't show price of items if there is a flat fee modify price
+              ? "$0.00"
+              : `$${modifier.price.toFixed(2)}`,
+            "\n"
+          );
+        }
       }
     }
-  }
     console.log(itemString);
     return itemString + "\n";
   }
@@ -196,6 +195,7 @@ class Formatter {
   priceStatement(priceLabel, price = Number) {
     var spacer = "";
     let x;
+
     if (priceLabel === "Discount") {
       x = this.lineWidth - priceLabel.length - 1 - `-$${price.toFixed(2)}`.length;
     } else {

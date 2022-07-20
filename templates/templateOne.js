@@ -89,7 +89,7 @@ class TemplateOne {
 
     const formattedTotals = `${subTotal}${beforeDiscount}${delivery}${tax}\n${afterDiscount}${total}`; //Formatted totals as one string
 
-    console.log("Attempting to print...");
+    console.log("\n\n// ----------------------- Attempting to print ----------------------- //\n\n");
     //Attempts to connect to the thermal printer and execute the print
     device.open((err) => {
       for (let i = 0; i < copies; i++) {
@@ -105,9 +105,9 @@ class TemplateOne {
             printer
               .align("ct")
               .size(1.5, 1)
-              .text(`${restaurantInfo["name"]}`)
+              .text(`${restaurantInfo.name !== undefined ? restaurantInfo.name : ""}`)
               .size(0.5, 1)
-              .text(`${restaurantInfo.website}`);
+              .text(`${restaurantInfo.website !== undefined ? restaurantInfo.website : ""}`);
             if (i === 1) {
               printer.size(1.5, 1).text(secondaryDivider);
             }
@@ -117,7 +117,7 @@ class TemplateOne {
 
               // Time
               .size(1.5, 2)
-              .text(finishTime)
+              .text(finishTime !== undefined ? finishTime : "")
               .text(orderType === "DINE INN" ? "------- DINE INN -------" : "") //Indicates a dine inn order
               .size(1.5, 1)
               .text(orderType === "DELIVERY" ? deliveryAddress + "\n========================" : "")
@@ -128,22 +128,22 @@ class TemplateOne {
 
               // Order number
               .align("lt")
-              .text(`Phone number:  ${order["phoneNumber"]}`)
+              .text(`Phone number:  ${order.phoneNumber !== undefined ? order.phoneNumber : ""}`)
 
               // Order time
-              .text(`Order time:  ${orderTime}`)
+              .text(`Order time:  ${orderTime !== undefined ? orderTime : ""}`)
 
               // Order type
-              .text(orderType)
+              .text(orderType !== undefined ? orderType : "")
 
               // Spacer
               .feed()
 
               // Order note
-              .text(orderNote + "\n")
+              .text((orderNote !== undefined ? orderNote : "") + "\n")
 
               // Payment Method
-              .text(isPaid)
+              .text(isPaid !== undefined ? isPaid : "")
 
               // Divider
               .text(divider)
@@ -156,12 +156,12 @@ class TemplateOne {
               .text(divider)
 
               // Totals
-              .text(formattedTotals + "\n")
+              .text(formattedTotals !== undefined ? formattedTotals : "" + "\n")
 
               // Finish Time
               .align("ct")
               .size(1.5, 2)
-              .text(finishTime)
+              .text(finishTime !== undefined ? finishTime : "")
 
               // Ending Message
               .size(0.5, 1)

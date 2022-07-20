@@ -79,7 +79,7 @@ class Backend {
                         printer.ip !== undefined ? printer.ip : "192.168.0.1",
                         printer.copies !== undefined ? printer.copies : "1",
                         printer.beeps !== undefined ? printer.beeps : "1",
-                        this.restaurantInfo !== undefined ? this.restaurantInfo : { wbesite: "", name: "" },
+                        this.restaurantInfo !== undefined ? this.restaurantInfo : { website: "", name: "" },
                         order.data() !== undefined ? order.data() : {},
                         resolve,
                         reject

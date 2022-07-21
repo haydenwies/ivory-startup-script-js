@@ -123,9 +123,6 @@ class TemplateOne {
               .text(orderType === "DELIVERY" ? deliveryAddress + "\n========================" : "")
               .size(0.5, 1)
 
-              // Spacer x2
-              .text("\n")
-
               // Order number
               .align("lt")
               .text(`Phone number:  ${order.phoneNumber !== undefined ? order.phoneNumber : ""}`)
@@ -169,7 +166,7 @@ class TemplateOne {
 
             // Spacer x2
             printer
-              .text("\n\n")
+              .text("\n")
 
               // Cut Receipt & Close printer session
               .cut()

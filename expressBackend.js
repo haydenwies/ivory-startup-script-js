@@ -1,6 +1,8 @@
 const printOrder = async (receipt, printInfo, res) => {
+  const DEFAULT_WEBSITE = "";
+  const DEFAULT_RESAURANT_NAME = "Yu's Restaurant";
   const TemplateOne = require("./templates/templateOne");
-  let restaurantInfo = { website: "", name: "" };
+  let restaurantInfo = { website: DEFAULT_WEBSITE, name: DEFAULT_RESAURANT_NAME };
   let printStatus = { allPrinted: true, failedPrinters: [], id: "", printId: "", otherErrors: [] };
 
   const id = printInfo.id; // Get order id
@@ -15,11 +17,12 @@ const printOrder = async (receipt, printInfo, res) => {
       new Promise((resolve, reject) => {
         resolve,
           (reject = new TemplateOne(
-            printer.name !== undefined ? printer.name : "",
+            printer.name !== undefined ? printer.name : "UNKNOWN",
             printer.ip !== undefined ? printer.ip : "192.168.0.1",
             printer.copies !== undefined ? printer.copies : "1",
             printer.beeps !== undefined ? printer.beeps : "1",
-            restaurantInfo !== undefined ? restaurantInfo : { website: "", name: "" },
+            restaurantInfo,
+            // { website: DEFAULT_WEBSITE, name: DEFAULT_RESAURANT_NAME },
             receipt !== undefined ? receipt : {},
             resolve,
             reject

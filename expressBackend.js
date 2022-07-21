@@ -1,6 +1,6 @@
 const printOrder = async (receipt, printInfo, res) => {
+  const DEFAULT_RESAURANT_NAME = "";
   const DEFAULT_WEBSITE = "";
-  const DEFAULT_RESAURANT_NAME = "Yu's Restaurant";
   const TemplateOne = require("./templates/templateOne");
   let restaurantInfo = { website: DEFAULT_WEBSITE, name: DEFAULT_RESAURANT_NAME };
   let printStatus = { allPrinted: true, failedPrinters: [], id: "", printId: "", otherErrors: [] };

@@ -15,7 +15,7 @@ app.listen(3001, () => {
 });
 app.use(
   cors({
-    origin: ["localhost:3000", "http://localhost:3000/order", "https://yuchineserestaurant.web.app"],
+    origin: ["localhost:3000", "http://localhost:3000/order"],
     // origin: "*",
   })
 );

@@ -1,8 +1,8 @@
 const printOrder = async (receipt, printInfo, res) => {
   const DEFAULT_RESAURANT_NAME = "Super Wok";
-  const DEFAULT_WEBSITE = "";
+  const DEFAULT_WEBSITE_NAME = "";
   const TemplateOne = require("./templates/templateOne");
-  let restaurantInfo = { website: DEFAULT_WEBSITE, name: DEFAULT_RESAURANT_NAME };
+  let restaurantInfo = { website: DEFAULT_WEBSITE_NAME, name: DEFAULT_RESAURANT_NAME };
   let printStatus = { allPrinted: true, failedPrinters: [], id: "", printId: "", otherErrors: [] };
 
   const id = printInfo.id; // Get order id

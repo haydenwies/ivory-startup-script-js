@@ -3,8 +3,10 @@ class Backend {
     // Firebase and firestore setup
     const { initializeApp, cert } = require("firebase-admin/app");
     const { getFirestore } = require("firebase-admin/firestore");
-
     const serviceAccount = require("./credentials.json");
+
+    const DEFAULT_RESTAURANT_NAME = "";
+    const DEFAULT_WEBSITE_NAME = "";
 
     //Validate firebase credentials in credentials.json
     initializeApp({
@@ -12,7 +14,7 @@ class Backend {
     });
     this.db = getFirestore(); //Gets a reference to firestore
 
-    this.restaurantInfo = { website: "", name: "" };
+    this.restaurantInfo = { website: DEFAULT_WEBSITE_NAME, name: DEFAULT_RESTAURANT_NAME };
 
     // Pulls restaurant info data
     const restaurantInfo = async () => {
@@ -20,7 +22,7 @@ class Backend {
       if (doc.exists) {
         this.restaurantInfo = doc.data();
         if (this.restaurantInfo.name === undefined || this.restaurantInfo.website === undefined) {
-          this.restaurantInfo = { website: "", name: "" };
+          this.restaurantInfo = { website: DEFAULT_WEBSITE_NAME, name: DEFAULT_RESTAURANT_NAME };
         }
       }
     };
@@ -79,7 +81,9 @@ class Backend {
                         printer.ip !== undefined ? printer.ip : "192.168.0.1",
                         printer.copies !== undefined ? printer.copies : "1",
                         printer.beeps !== undefined ? printer.beeps : "1",
-                        this.restaurantInfo !== undefined ? this.restaurantInfo : { website: "", name: "" },
+                        this.restaurantInfo !== undefined
+                          ? this.restaurantInfo
+                          : { website: DEFAULT_WEBSITE_NAME, name: DEFAULT_RESTAURANT_NAME },
                         order.data() !== undefined ? order.data() : {},
                         resolve,
                         reject

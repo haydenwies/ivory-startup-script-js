@@ -89,7 +89,7 @@ class Formatter {
     let newName = "           ";
     let quantity = `${item["quantity"] === 1 ? "" : item["quantity"] + " x "}`;
     let price = `$${(item.price * item.quantity).toFixed(2)}`;
-    let spacer;
+    let spacer = 0;
     let spacerString = "";
 
     //Horizontal combo number feature
@@ -100,7 +100,8 @@ class Formatter {
       }
       spacer = this.lineWidth - (quantity.length + newName.length + price.length); //Calculate the spacing length of the name horizontally
     } else {
-      spacer = this.lineWidth - (quantity.length + item["name"].length + price.length); //Calculate the spacing length of the name vertically
+      if (item.name !== undefined)
+        spacer = this.lineWidth - (quantity.length + item["name"].length + price.length); //Calculate the spacing length of the name vertically
     }
 
     // Adds the correct amount of spacing between item name and price
@@ -111,15 +112,18 @@ class Formatter {
     if (item.category === "Special Combo") {
       itemString = itemString.concat(quantity, newName, spacerString, price, "\n");
     } else {
-      itemString = itemString.concat(quantity, item["name"], spacerString, price, "\n");
+      if (item.name !== undefined)
+        itemString = itemString.concat(quantity, item["name"], spacerString, price, "\n");
     }
 
     // Format selectionList
-    for (let selectionList of item["selectionList"].items) {
-      if (item.category === "Special Combo") break; //Exits the selection list if item is special combo
-      const bullet = "  - ";
-      spacer = "    ";
-      itemString = itemString.concat(bullet, selectionList, "\n");
+    if (item.selectionList.items !== undefined) {
+      for (let selectionList of item["selectionList"].items) {
+        if (item.category === "Special Combo") break; //Exits the selection list if item is special combo
+        const bullet = "  - ";
+        spacer = "    ";
+        itemString = itemString.concat(bullet, selectionList, "\n");
+      }
     }
 
     // Format modifiers

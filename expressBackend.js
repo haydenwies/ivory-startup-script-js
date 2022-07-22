@@ -1,5 +1,5 @@
 const printOrder = async (receipt, printInfo, res) => {
-  const DEFAULT_RESAURANT_NAME = "";
+  const DEFAULT_RESAURANT_NAME = "Super Wok";
   const DEFAULT_WEBSITE = "";
   const TemplateOne = require("./templates/templateOne");
   let restaurantInfo = { website: DEFAULT_WEBSITE, name: DEFAULT_RESAURANT_NAME };
@@ -22,7 +22,6 @@ const printOrder = async (receipt, printInfo, res) => {
             printer.copies !== undefined ? printer.copies : "1",
             printer.beeps !== undefined ? printer.beeps : "1",
             restaurantInfo,
-            // { website: DEFAULT_WEBSITE, name: DEFAULT_RESAURANT_NAME },
             receipt !== undefined ? receipt : {},
             resolve,
             reject

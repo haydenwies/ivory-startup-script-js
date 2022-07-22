@@ -15,7 +15,7 @@ app.listen(3001, () => {
 });
 app.use(
   cors({
-    origin: ["localhost:3000", "http://localhost:3000/order"],
+    origin: ["localhost:3000", "http://localhost:3000/order", "https://ivoryoms-superwok.web.app"],
     // origin: "*",
   })
 );

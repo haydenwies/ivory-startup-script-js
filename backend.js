@@ -5,7 +5,7 @@ class Backend {
     const { getFirestore } = require("firebase-admin/firestore");
     const serviceAccount = require("./credentials.json");
 
-    const DEFAULT_RESTAURANT_NAME = "";
+    const DEFAULT_RESTAURANT_NAME = "Super Wok";
     const DEFAULT_WEBSITE_NAME = "";
 
     //Validate firebase credentials in credentials.json

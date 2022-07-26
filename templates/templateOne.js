@@ -7,19 +7,38 @@ class TemplateOne {
    * @param {*} resolve stores the success state
    * @param {*} reject stores the failed state
    */
-  constructor(printerName, ip, copies, beeps, restaurantInfo, order, resolve, reject) {
+  constructor(
+    printerName,
+    ip,
+    copies,
+    beeps,
+    restaurantInfo,
+    order,
+    wirePrint,
+    resolve,
+    reject
+  ) {
     console.log("Formatting receipt...");
 
     //ESCPOS libraries
     const escpos = require("escpos");
-    escpos.Network = require("escpos-network");
+    if (wirePrint) {
+      escpos.USB = require("escpos-usb");
+    } else {
+      escpos.Network = require("escpos-network");
+    }
 
     //Create a new instance of the formatter class
     const Formatter = require("./formatter");
     const formatter = new Formatter(48);
 
     //Printer device setup
-    const device = new escpos.Network(ip);
+    let device = null;
+    if(wirePrint){
+      device = new escpos.USB();
+    }else{
+      device = new escpos.Network(ip);
+    }
     const options = { encoding: "utf8", width: 24 };
     const printer = new escpos.Printer(device, options);
 
@@ -37,7 +56,10 @@ class TemplateOne {
     //Formats the delivery fee
     const deliveryFee = () => {
       if (order["orderType"] == "DELIVERY") {
-        const deliveryFee = formatter.priceStatement("Delivery fee", order["deliveryFee"]);
+        const deliveryFee = formatter.priceStatement(
+          "Delivery fee",
+          order["deliveryFee"]
+        );
         return deliveryFee;
       } else {
         return "";
@@ -47,7 +69,10 @@ class TemplateOne {
     //Formats the beforeTaxDiscount
     const beforeTaxDiscount = () => {
       if (order["beforeTaxDiscount"] !== 0) {
-        const beforeTaxDiscount = formatter.priceStatement("Discount", order["beforeTaxDiscount"]);
+        const beforeTaxDiscount = formatter.priceStatement(
+          "Discount",
+          order["beforeTaxDiscount"]
+        );
         return beforeTaxDiscount;
       } else {
         return "";
@@ -57,7 +82,10 @@ class TemplateOne {
     //Formats the afterTaxDiscount
     const afterTaxDiscount = () => {
       if (order["afterTaxDiscount"] !== 0) {
-        const afterTaxDiscount = formatter.priceStatement("Discount", order["afterTaxDiscount"]);
+        const afterTaxDiscount = formatter.priceStatement(
+          "Discount",
+          order["afterTaxDiscount"]
+        );
         return afterTaxDiscount;
       } else {
         return "";
@@ -68,28 +96,45 @@ class TemplateOne {
     const secondaryDivider = formatter.secondaryDivider(24);
     //Properties of the receipt
     let { date, hours, meridian, minutes } = order.scheduledTime;
-    const scheduledTime = order.isScheduledOrder ? `${hours}:${minutes} ${meridian}\n${date}` : "";
+    const scheduledTime = order.isScheduledOrder
+      ? `${hours}:${minutes} ${meridian}\n${date}`
+      : "";
     const orderTime = `${order.time[0]}, ${order.date}`;
-    const finishTime = order.isScheduledOrder ? scheduledTime : order.finishTime;
+    const finishTime = order.isScheduledOrder
+      ? scheduledTime
+      : order.finishTime;
     const orderType = formatter.orderType(order.orderType);
     const deliveryAddress = order.deliveryAddress;
     const orderNote = formatter.note(order["note"]);
     const isPaid = formatter.paidStatus(order.paid, order.paymentMethod);
     const endingMessage = "Thank You & Come Again :)";
-    const subTotal = `${formatter.priceStatement("Sub total", order["subTotal"])}`;
+    const subTotal = `${formatter.priceStatement(
+      "Sub total",
+      order["subTotal"]
+    )}`;
     const beforeDiscount = `${
-      order.discounted ? (order.afterTaxDiscount !== "" ? beforeTaxDiscount() + "\n" : "") : ""
+      order.discounted
+        ? order.afterTaxDiscount !== ""
+          ? beforeTaxDiscount() + "\n"
+          : ""
+        : ""
     }`;
-    const delivery = `${order.deliveryAddress === "" ? "" : deliveryFee() + "\n"}`;
+    const delivery = `${
+      order.deliveryAddress === "" ? "" : deliveryFee() + "\n"
+    }`;
     const tax = `${formatter.priceStatement("Tax", order["tax"])}`;
     const afterDiscount = `${
-      order.discounted ? (order.beforeTaxDiscount !== "" ? afterTaxDiscount() + "\n" : "") : ""
+      order.discounted
+        ? order.beforeTaxDiscount !== ""
+          ? afterTaxDiscount() + "\n"
+          : ""
+        : ""
     }`;
     const total = `${formatter.priceStatement("Total", order["total"])}`;
-
     const formattedTotals = `${subTotal}${beforeDiscount}${delivery}${tax}\n${afterDiscount}${total}`; //Formatted totals as one string
-
-    console.log("\n\n// ----------------------- Attempting to print ----------------------- //\n\n");
+    console.log(
+      "Atteming to print...\n\n"
+    );
     //Attempts to connect to the thermal printer and execute the print
     device.open((err) => {
       for (let i = 0; i < copies; i++) {
@@ -105,9 +150,19 @@ class TemplateOne {
             printer
               .align("ct")
               .size(1.5, 1)
-              .text(`${restaurantInfo.name !== undefined ? restaurantInfo.name : ""}`)
+              .text(
+                `${
+                  restaurantInfo.name !== undefined ? restaurantInfo.name : ""
+                }`
+              )
               .size(0.5, 1)
-              .text(`${restaurantInfo.website !== undefined ? restaurantInfo.website : ""}`);
+              .text(
+                `${
+                  restaurantInfo.website !== undefined
+                    ? restaurantInfo.website
+                    : ""
+                }`
+              );
             if (i === 1) {
               printer.size(1.5, 1).text(secondaryDivider);
             }
@@ -120,12 +175,20 @@ class TemplateOne {
               .text(finishTime !== undefined ? finishTime : "")
               .text(orderType === "DINE INN" ? "------- DINE INN -------" : "") //Indicates a dine inn order
               .size(1.5, 1)
-              .text(orderType === "DELIVERY" ? deliveryAddress + "\n========================" : "")
+              .text(
+                orderType === "DELIVERY"
+                  ? deliveryAddress + "\n========================"
+                  : ""
+              )
               .size(0.5, 1)
 
               // Order number
               .align("lt")
-              .text(`Phone number:  ${order.phoneNumber !== undefined ? order.phoneNumber : ""}`)
+              .text(
+                `Phone number:  ${
+                  order.phoneNumber !== undefined ? order.phoneNumber : ""
+                }`
+              )
 
               // Order time
               .text(`Order time:  ${orderTime !== undefined ? orderTime : ""}`)
@@ -175,7 +238,13 @@ class TemplateOne {
             // return resolve, reject;
           }
         } catch (err) {
-          reject({ id: order.id, printerName, ip, printId: order.printId, err });
+          reject({
+            id: order.id,
+            printerName,
+            ip,
+            printId: order.printId,
+            err,
+          });
           // return resolve, reject;
         }
       }

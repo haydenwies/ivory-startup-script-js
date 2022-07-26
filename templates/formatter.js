@@ -187,7 +187,7 @@ class Formatter {
         }
       }
     }
-    console.log(itemString);
+    // console.log(itemString);
     return itemString + "\n";
   }
 

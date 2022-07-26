@@ -26,5 +26,6 @@ app.get("/", (req, res) => {
 app.post("/print", (req, res) => {
   const data = req.body;
   const { receipt, printData } = data;
-  printOrder(receipt, printData, res);
+  let wirePrint = true;
+  printOrder(wirePrint,receipt, printData, res);
 });

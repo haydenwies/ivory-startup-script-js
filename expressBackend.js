@@ -1,12 +1,31 @@
-const printOrder = async (receipt, printInfo, res) => {
+const printOrder = async (wirePrint, receipt, printData, res) => {
+  const { getFirestore } = require("firebase-admin/firestore");
+  if (wirePrint) {
+    console.log("\n\n******************* WIRED PRINTING ******************* ");
+  } else {
+    console.log(
+      "\n\n******************* NETWORK PRINTING ******************* "
+    );
+  }
+
+  this.db = getFirestore(); //Gets a reference to firestore
+
   const DEFAULT_RESAURANT_NAME = "Super Wok";
   const DEFAULT_WEBSITE_NAME = "";
   const TemplateOne = require("./templates/templateOne");
-  let restaurantInfo = { website: DEFAULT_WEBSITE_NAME, name: DEFAULT_RESAURANT_NAME };
-  let printStatus = { allPrinted: true, failedPrinters: [], id: "", printId: "", otherErrors: [] };
+  let restaurantInfo = {
+    website: DEFAULT_WEBSITE_NAME,
+    name: DEFAULT_RESAURANT_NAME,
+  };
+  let printStatus = {
+    allPrinted: true,
+    failedPrinters: [],
+    id: "",
+    printId: "",
+    otherErrors: [],
+  };
 
-  const id = printInfo.id; // Get order id
-  const printers = printInfo.printers; // Get printers from printInfo
+  const printers = printData.printers; // Get printers from printData
 
   let templateOnePromises = []; //Stores the array of printer promise requests to be executed by promise.allSetteled
 
@@ -23,6 +42,7 @@ const printOrder = async (receipt, printInfo, res) => {
             printer.beeps !== undefined ? printer.beeps : "1",
             restaurantInfo,
             receipt !== undefined ? receipt : {},
+            wirePrint !== undefined ? wirePrint : false,
             resolve,
             reject
           ));
@@ -37,26 +57,27 @@ const printOrder = async (receipt, printInfo, res) => {
     .then(async (results) => {
       // Indicates whether the printers succesfully printed or failed and gives a list of failed printers.
 
-      // Displays a table of printer request results
-      console.log(
-        "\n// -------------------------- RESULTS OF THE PRINTER PROMISES -------------------------- //\n",
-        results
-      );
-
       //We loop over all of the results and record what the status is
       for (let result of results) {
         let { status } = result;
         //A print request has failed to exectute
         if (status === "rejected") {
           let { reason } = result;
-          let date = new Date().toLocaleString("sv", { timeZoneName: "short" }).slice(0, 19); //Get the current date and time
+          let date = new Date()
+            .toLocaleString("sv", { timeZoneName: "short" })
+            .slice(0, 19); //Get the current date and time
 
           //Fills in a list of failed printers
           let { id, printerName, ip, printId, err } = reason; //Destructure the properties of the failed print attempt (promise)
-          printStatus.id = id;
-          printStatus.printId = printId;
+          printStatus.id = id ?? "UNKNOWN";
+          printStatus.printId = printId ?? "UNKNOWN";
           printStatus.allPrinted = false;
-          printStatus.failedPrinters.push({ date, printerName, ip, err: `${err}` });
+          printStatus.failedPrinters.push({
+            date: date ?? "UNKNOWN",
+            printerName: printerName ?? "UNKNOWN",
+            ip: ip ?? "UNKNOWN",
+            err: `${err}`,
+          });
 
           // Displays out what the failed printer properties are
           console.log(
@@ -64,9 +85,9 @@ const printOrder = async (receipt, printInfo, res) => {
           );
           console.table({
             date,
-            printerName,
-            ip,
-            printId,
+            printerName: printerName ?? "UNKNOWN",
+            ip: ip ?? "UNKNOWN",
+            printId: printId ?? "UNKNOWN",
             err: `${err}`,
           });
         }
@@ -88,11 +109,22 @@ const printOrder = async (receipt, printInfo, res) => {
           " \n\n// -------------------------- ONE OR MORE ORDERS FAILED TO PRINT -------------------------- //\n\n",
           printStatus
         );
-        res.status(409).send("FAILED");
+        if (wirePrint) {
+          console.log(
+            "// ------------------- Wired Printing Failed ------------------- //"
+          );
+          printOrder((wirePrint = false), receipt, printData, res);
+        } else {
+          res.status(409).send("FAILED");
+        }
       }
     })
     //This catch case will likely never be executed, but if it does I don't understand JS.
     .catch(async (err) => {
+      await this.db
+        .collection("serverLog")
+        .doc()
+        .set({ backend: "Express", err: `${err}` ?? "UNDEFINED ERROR" });
       console.error("\n\nWE HAVE AN ERROR\n\n", err);
     });
 };

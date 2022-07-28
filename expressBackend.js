@@ -124,7 +124,7 @@ const printOrder = async (wirePrint, receipt, printData, res) => {
       await this.db
         .collection("serverLog")
         .doc()
-        .set({ backend: "Express", err: `${err}` ?? "UNDEFINED ERROR" });
+        .set({ backend: "Express", err: `${err}`, date});
       console.error("\n\nWE HAVE AN ERROR\n\n", err);
     });
 };

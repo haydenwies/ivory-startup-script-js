@@ -9,7 +9,7 @@ backend.orderQueListener();
 const cors = require("cors");
 const app = express();
 
-app.use(express.json());
+app.use(express.json({limit: '700kb'}));
 app.listen(3001, () => {
   console.log("Also listening on 3001");
 });

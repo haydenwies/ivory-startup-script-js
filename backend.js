@@ -208,6 +208,13 @@ class Backend {
                       .collection("errLog")
                       .doc(printStatus.printId ?? "undefined")
                       .set(printStatus, { merge: true });
+                      printStatus = {
+                        allPrinted: true,
+                        failedPrinters: [],
+                        id: "",
+                        printId: "",
+                        otherErrors: [],
+                      };
                   }
                 })
                 //This catch case will likely never be executed, but if it does I don't understand JS.
@@ -216,7 +223,7 @@ class Backend {
                     .collection("serverLog")
                     .doc()
                     .set(
-                      { backend: "Express", err: `${err}` ?? "UNDEFINED ERROR"}
+                      { backend: "Express", err: `${err}` ?? "UNDEFINED ERROR", date}
                     );
                   console.error("\n\nWE HAVE AN ERROR\n\n", err);
                 });
